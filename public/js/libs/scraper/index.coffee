@@ -59,8 +59,11 @@ populatePullResults = (data, result, callback) ->
 	callback resultJSON
 
 scrapePage = (url, data, callback) ->
+	console.log 'creating phantom instance for %s', url
 	phantom.create (ph)->
+		console.log 'creating phantom page for %s', url 
 		ph.createPage (page)->
+			console.log 'phantom page created for %s', url
 			page.onConsoleMessage = (msg) -> console.log msg
 			page.open url, (status)->
 				console.log 'Opening site: ', url
