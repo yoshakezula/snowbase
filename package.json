@@ -2,6 +2,8 @@
     "name": "snowbase",
     "author": "Kenny Chan",
     "version": "0.0.1",
+    "main": "server.coffee",
+    "repository" : "git@github.com:yoshakezula/snowbase.git",
     "dependencies": {
         "coffee-script": "*",
         "express": "*",
