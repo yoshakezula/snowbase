@@ -17,7 +17,7 @@
         "mongodb" : "*",
         "underscore": "*",
         "nib": "*",
-        "node-phantom": "*",
-        "phantom": "*"
+        "phantom": "*",
+        "node-phantom": "*"
     }
 }
