@@ -1,0 +1,12 @@
+html,body{margin:0;padding:0}
+body{background-image:url("../img/gplaypattern.png");-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;font-family:"Open Sans","Helvetica Neue",Helvetica,Arial,sans-serif !important;-webkit-font-smoothing:antialiased}
+#app{padding-top:20px}
+#resort-list{margin-top:40px}
+#resort-data{position:relative;}
+#resort-data .rickshaw_legend{color:#333;background-color:#eee;position:absolute;top:0;left:0;}
+#resort-data .rickshaw_legend .action{color:#333}
+.this-season-base{padding:5px;font-size:16px}
+.past-season-base{color:#aaa;padding:0 5px;font-size:14px}
+#resort-name{font-size:40px;font-weight:bold;line-height:1}
+.resort-list-item{margin:5px;cursor:pointer;-webkit-transition:all .5s;-moz-transition:all .5s;-o-transition:all .5s;-ms-transition:all .5s;transition:all .5s;}
+.resort-list-item:hover,.resort-list-item.resort-list-item-selected{font-weight:bold;padding-left:5px}
