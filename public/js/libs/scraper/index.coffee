@@ -27,10 +27,10 @@ evalFunction = (page, ph, data, callback)->
 					baseDepthInches: parseInt cols[3].innerHTML.match(/[0-9]+/)[0]	
 			JSON.stringify resultsObj
 		, (result)->
-			callback data, result
+			populatePullResults data, result, callback
 			ph.exit()
 
-populatePullResults = (data, result) ->
+populatePullResults = (data, result, callback) ->
 	resultJSON = JSON.parse result
 	_.each resultJSON, (v, k) ->
 		#Look for existing snowday
@@ -56,6 +56,7 @@ populatePullResults = (data, result) ->
 						console.log 'error saving snow day'
 					else
 						console.log 'snow day saved'
+	callback resultJSON
 
 scrapePage = (url, data, callback) ->
 	phantom.create (ph)->
@@ -66,10 +67,9 @@ scrapePage = (url, data, callback) ->
 				console.log 'Opened site? ', status
 				evalFunction page, ph, data, callback
 
-exports.scrape = (resorts = [], years) ->
-	years = years || ['2009', '2010', '2011', '2012', '2013']
-	# years = years || ['2012']
-	for j in [0...resorts.length]
-		for i in [0...years.length]
-			url = 'http://www.onthesnow.com/colorado/' + resorts[j].name + '/historical-snowfall.html?&y=' + years[i] + '&q=base&v=list#view'
-			scrapePage url, {resort: resorts[j], year: years[i]}, populatePullResults
+exports.scrape = (resort, callback) ->
+	if !resort then return
+	years = ['2009', '2010', '2011', '2012', '2013']
+	for i in [0...years.length]
+		url = 'http://www.onthesnow.com/colorado/' + resort.name + '/historical-snowfall.html?&y=' + years[i] + '&q=base&v=list#view'
+		scrapePage url, {resort: resort, year: years[i]}, callback

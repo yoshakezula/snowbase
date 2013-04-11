@@ -28,29 +28,34 @@ populateResortMap = (callback)->
 	_resortMap = {}
 	SnowDay.find (err, results) ->
 		_.each results, (result) ->
-			resortName = result.resortName
-			date = new Date(result.snowDate)
-			season = undefined
+			try
+				resortName = result.resortName
+				date = new Date(result.snowDate)
+				season = undefined
 
-			#delete day if it's Feb 29 so we don't have non-matching days btwn seasons
-			if result.snowDateString.toString().slice(4,8) == '0229'
-				result.remove(err) ->
-					if !err then console.log 'removed snow day on feb 29'
-			#Start season in November (month 10)
-			else if date.getMonth() > 9
-				season = date.getFullYear() + '-' + (date.getFullYear() + 1).toString()
-			#end season in april (month 3)
-			else if date.getMonth() < 4
-				season = (date.getFullYear() - 1) + '-' + date.getFullYear().toString()
-			else
-				result.remove(err) ->
-					if !err then console.log 'removed snow day outside of season bounds'
-			if season
-				if !_resortMap[resortName]
-					_resortMap[resortName] = {}
-				if !_resortMap[resortName][season]
-					_resortMap[resortName][season] = {}	
-				_resortMap[resortName][season][result.snowDateString] = result
+				#delete day if it's Feb 29 so we don't have non-matching days btwn seasons
+				if result.snowDateString.toString().slice(4,8) == '0229'
+					result.remove(err) ->
+						if !err then console.log 'removed snow day on feb 29'
+				#Start season in November (month 10)
+				else if date.getMonth() > 9
+					season = date.getFullYear() + '-' + (date.getFullYear() + 1).toString()
+				#end season in april (month 3)
+				else if date.getMonth() < 4
+					season = (date.getFullYear() - 1) + '-' + date.getFullYear().toString()
+				else
+					result.remove(err) ->
+						if !err then console.log 'removed snow day outside of season bounds'
+				if season
+					if !_resortMap[resortName]
+						_resortMap[resortName] = {}
+					if !_resortMap[resortName][season]
+						_resortMap[resortName][season] = {}	
+					_resortMap[resortName][season][result.snowDateString] = result
+			catch error
+				console.log result
+				# console.log typeof result.snowDate
+				console.log error
 		console.log 'populateResortMap: calling callback'
 		callback()
 
@@ -92,7 +97,7 @@ getDateArray = (startYear) ->
 	result
 
 _normalizeRunning = false
-normalizeSnowData = () ->
+normalizeSnowData = (callback) ->
 	padSeason = true
 	if _normalizeRunning then return
 	_normalizeRunning = true
@@ -190,6 +195,7 @@ normalizeSnowData = () ->
 							#Populate the previousDayString so we can know where the start point is for the interpolation
 							previousDayString = dateString
 		console.log 'snow Data normalized'
+		callback _resortMap
 		_normalizeRunning = false
 	
 exports.normalizeSnowData = normalizeSnowData
