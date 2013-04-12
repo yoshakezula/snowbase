@@ -27,6 +27,9 @@ deleteResort = (req, res, callback) ->
 			else
 				res.send 'error deleting'
 
+fetchData = (resort, callback) ->
+	callback resort
+
 exports.init = (app) ->
 	app.get '/', (req, res) ->
 		res.render 'index', title: "SnowBase - Compare This Year's Snow Base Depth to the Past"
@@ -38,11 +41,11 @@ exports.init = (app) ->
 	app.get '/api/delete-resort/:id', deleteResort
 	
 	app.get '/api/pull/:name', (req, res) ->
-		addResort req, res, (results) ->
-			if results == 'error'
+		addResort req, res, (resort) ->
+			if resort == 'error'
 				res.send 'error'
 			else
-				scraper.scrape results, (results) ->
+				fetchData resort, (results) ->
 					res.send results
 
 	app.get '/api/resorts', (req, res) ->
