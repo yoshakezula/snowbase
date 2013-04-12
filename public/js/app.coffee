@@ -39,7 +39,7 @@ $ ->
 
 	class ResortCollection extends Backbone.Collection
 		model: Resort
-		url: 'http://localhost:5000/resorts'
+		url: 'http://snowbase-api.kennychan.co/resorts'
 
 	# SnowDays = new SnowDayCollection()	
 	Resorts = new ResortCollection()
@@ -200,7 +200,7 @@ $ ->
 				@populateChartData()
 				@renderChart()
 
-			requestURI = 'http://localhost:5000/snow-days/' + @model.get 'name'
+			requestURI = 'http://snowbase-api.kennychan.co/snow-days/' + @model.get 'name'
 			req = new XMLHttpRequest()
 			req.addEventListener 'readystatechange', ->
 				if req.readyState == 4 #readystate complete
