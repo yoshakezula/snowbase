@@ -30,7 +30,7 @@
 
       ResortCollection.prototype.model = Resort;
 
-      ResortCollection.prototype.url = 'http://localhost:5000/resorts';
+      ResortCollection.prototype.url = 'http://snowbase-api.kennychan.co/resorts';
 
       return ResortCollection;
 
@@ -226,7 +226,7 @@
           _this.populateChartData();
           return _this.renderChart();
         };
-        requestURI = 'http://localhost:5000/snow-days/' + this.model.get('name');
+        requestURI = 'http://snowbase-api.kennychan.co/snow-days/' + this.model.get('name');
         req = new XMLHttpRequest();
         req.addEventListener('readystatechange', function() {
           var data;
