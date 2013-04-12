@@ -1,5 +1,5 @@
 _ = require 'underscore'
-phantom = require 'phantom'
+# phantom = require 'phantom'
 db = require '../../../../db'
 
 # resorts = ['arapahoe-basin-ski-area', 'breckenridge']
