@@ -44,6 +44,7 @@ populateResortMap = (callback)->
 				else if date.getMonth() < 4
 					season = (date.getFullYear() - 1) + '-' + date.getFullYear().toString()
 				else
+					console.log 'removing %s', date.toString()
 					result.remove(err) ->
 						if !err then console.log 'removed snow day outside of season bounds'
 				if season
@@ -57,16 +58,18 @@ populateResortMap = (callback)->
 				# console.log typeof result.snowDate
 				console.log error
 		console.log 'populateResortMap: calling callback'
-		callback()
+		setTimeout callback, 2000
 
 removeDuplicates = (callback) ->
 	#the _id: null specifies that we don't want to group by anything, and then we are specifying that we want to return the snowDateString, with the aggregation function "$addToSet", which returns one unique value for each dateString. $project selects which fields to return
 	# SnowDay.aggregate {$group: {_id: null, snowDateString: {$addToSet: "$snowDateString"}}}, {$project: {_id: 0, snowDateString: 1}}, (err, res) ->
 	# 	if callback then callback res
-	SnowDay.aggregate {$group: {_id: "$snowDateString", count: {$sum: 1}}}, {$project: {_id: 0, snowDateString: "$_id", count: 1}}, (err, results) ->
+	SnowDay.aggregate {$group: {_id: "$snowDateString", resortName: {$addToSet: "$resortName"}, count: {$sum: 1}}}, {$project: {_id: 0, resortName: 1, snowDateString: "$_id", count: 1}}, (err, results) ->
 		duplicates = _.filter results, (result) ->
 			result.count > 1
-		if callback then callback duplicates
+		# _.each duplicates, (duplicate) ->
+		# 	SnowDay.find()
+		callback duplicates
 
 exports.removeDuplicates = removeDuplicates
 

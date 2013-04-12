@@ -3,45 +3,45 @@ $ ->
 	class Resort extends Backbone.Model
 		idAttribute: "_id"
 
-	class SnowDay extends Backbone.Model
-		idAttribute: "_id"
+	# class SnowDay extends Backbone.Model
+	# 	idAttribute: "_id"
 
-	class SnowDayCollection extends Backbone.Collection
-		model: SnowDay
-		url: '/api/snow-days'
-		initialize: () ->
-			@_resortMap = {}
-			@_correctedResortMap = {}
-			@on 'add', @_addModelToMaps
-			@on 'reset', @_addAllModelsToMaps
+	# class SnowDayCollection extends Backbone.Collection
+	# 	model: SnowDay
+	# 	url: 'http://snowbase-api/snow-days'
+	# 	initialize: () ->
+	# 		@_resortMap = {}
+	# 		@_correctedResortMap = {}
+	# 		@on 'add', @_addModelToMaps
+	# 		@on 'reset', @_addAllModelsToMaps
 
-		_addModelToMaps: (model) ->
-			resortName = model.get 'resortName'
-			date = new Date(model.get 'snowDate')
-			#Start season in November (month 10)
-			if date.getMonth() > 9
-				season = date.getFullYear() + '-' + (date.getFullYear() + 1).toString().slice(-2)
-			#end season in april (month 3)
-			else if date.getMonth() < 4
-				season = (date.getFullYear() - 1) + '-' + date.getFullYear().toString().slice(-2)
-			else
-				return
-			if !@_resortMap[resortName]
-				@_resortMap[resortName] = {}
-			if !@_resortMap[resortName][season]
-				@_resortMap[resortName][season] = {}
-			@_resortMap[resortName][season][model.get 'snowDateString'] = model
+	# 	_addModelToMaps: (model) ->
+	# 		resortName = model.get 'resortName'
+	# 		date = new Date(model.get 'snowDate')
+	# 		#Start season in November (month 10)
+	# 		if date.getMonth() > 9
+	# 			season = date.getFullYear() + '-' + (date.getFullYear() + 1).toString().slice(-2)
+	# 		#end season in april (month 3)
+	# 		else if date.getMonth() < 4
+	# 			season = (date.getFullYear() - 1) + '-' + date.getFullYear().toString().slice(-2)
+	# 		else
+	# 			return
+	# 		if !@_resortMap[resortName]
+	# 			@_resortMap[resortName] = {}
+	# 		if !@_resortMap[resortName][season]
+	# 			@_resortMap[resortName][season] = {}
+	# 		@_resortMap[resortName][season][model.get 'snowDateString'] = model
 
-		_addAllModelsToMaps: () ->
-			@_resortMap = {}
-			_.each @models, (model) =>
-				@_addModelToMaps model
+	# 	_addAllModelsToMaps: () ->
+	# 		@_resortMap = {}
+	# 		_.each @models, (model) =>
+	# 			@_addModelToMaps model
 
 	class ResortCollection extends Backbone.Collection
 		model: Resort
-		url: '/api/resorts'
+		url: 'http://localhost:5000/resorts'
 
-	SnowDays = new SnowDayCollection()	
+	# SnowDays = new SnowDayCollection()	
 	Resorts = new ResortCollection()
 	
 	class ResortView extends Backbone.View
@@ -59,7 +59,7 @@ $ ->
 	class ResortDataPane extends Backbone.View
 		el: $ '#resort-data-pane'
 		initialize: ()->
-			
+			@dataMap = {}
 			@chartData = []
 			@listenTo Backbone.Events, 'resortClicked', @clickHandler
 			@paletteStep = -1
@@ -174,13 +174,13 @@ $ ->
 		populateChartData: () ->
 			@paletteStep = -1
 			@chartData = []
-			@thisSeasonName = _.last((_.keys SnowDays._resortMap[@model.get 'name']).sort())
-			_.each SnowDays._resortMap[@model.get 'name'], (snowDays, seasonName) =>
+			@thisSeasonName = _.last((_.keys @dataMap).sort())
+			_.each @dataMap, (snowDays, seasonName) =>
 				seasonData = []
 				_.each snowDays, (snowDay) ->
 					seasonData.push
-						x: snowDay.get 'seasonDay'
-						y: snowDay.get 'snowBase'
+						x: snowDay.season_day
+						y: snowDay.base
 				@chartData.push 
 					name: seasonName
 					data: seasonData
@@ -195,16 +195,29 @@ $ ->
 			#set the name of the clicked resort
 			@$('#resort-name').html @model.get 'name'
 
-			if SnowDays._resortMap[@model.get 'name'] && _.size(SnowDays._resortMap[@model.get 'name']) > 0
+			callback = (data)=>
+				@dataMap = data
 				@populateChartData()
 				@renderChart()
+
+			requestURI = 'http://localhost:5000/snow-days/' + @model.get 'name'
+			req = new XMLHttpRequest()
+			req.addEventListener 'readystatechange', ->
+				if req.readyState == 4 #readystate complete
+					if req.status == 200 || req.status == 304 #success result codes
+						data = eval '(' + req.responseText + ')'
+						callback data
+					else
+						console.log 'Error loading data'
+			req.open 'GET', requestURI, false
+			req.send()
 
 	class AppView extends Backbone.View
 		el: $ '#app'
 		initialize: () ->
 			Resorts.bind 'sync', @render, this
 			Resorts.fetch()
-			SnowDays.fetch()
+			# SnowDays.fetch()
 
 		appendResort: (resort) ->
 			resortView = new ResortView

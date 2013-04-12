@@ -1,7 +1,7 @@
 express = require "express"
 path = require "path" 
 http = require 'http'
-mongoose = require 'mongoose'
+# mongoose = require 'mongoose'
 stylus = require 'stylus'
 nib = require 'nib'
 models = require './db'
@@ -9,11 +9,11 @@ routes = require './routes'
 # For coffeescript: https://github.com/adunkman/connect-assets
 app = express()
 
-mongoURIString = process.env.MONGOLAB_URI || 
-process.env.MONGOHQ_URL || 
-'mongodb://localhost/ski-app'
-mongoose.connect mongoURIString, (err, res) ->
-  console.log if err then 'ERROR connecting to ' + mongoURIString + '. ' + err else 'Succeeded connecting to ' + mongoURIString
+# mongoURIString = process.env.MONGOLAB_URI || 
+# process.env.MONGOHQ_URL || 
+# 'mongodb://localhost/ski-app'
+# mongoose.connect mongoURIString, (err, res) ->
+#   console.log if err then 'ERROR connecting to ' + mongoURIString + '. ' + err else 'Succeeded connecting to ' + mongoURIString
 
 compile = (str, path) ->
   stylus(str).set('filename', path).set('compress', true).use nib()

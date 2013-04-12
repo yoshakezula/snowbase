@@ -16,6 +16,7 @@
         "stylus": "*",
         "mongodb" : "*",
         "underscore": "*",
-        "nib": "*"
+        "nib": "*",
+        "request": "*"
     }
 }

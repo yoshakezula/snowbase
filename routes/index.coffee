@@ -1,5 +1,6 @@
 scraper = require '../public/js/libs/scraper'
 db = require '../db'
+request = require 'request'
 _ = require 'underscore'
 
 addResort = (req, res, callback) ->
@@ -28,7 +29,11 @@ deleteResort = (req, res, callback) ->
 				res.send 'error deleting'
 
 fetchData = (resort, callback) ->
-	callback resort
+	request {url: 'http://localhost:5000/snow-days/' + resort.name, json: true}, (error, response, body) ->
+		if !error && response.statusCode == 200
+			callback body
+		else
+			callback 'error'
 
 exports.init = (app) ->
 	app.get '/', (req, res) ->
@@ -46,7 +51,8 @@ exports.init = (app) ->
 				res.send 'error'
 			else
 				fetchData resort, (results) ->
-					res.send results
+					scraper.populatePullResults resort, results, (JSON) ->
+						res.send JSON
 
 	app.get '/api/resorts', (req, res) ->
 		db.Resort.find (err, results) ->

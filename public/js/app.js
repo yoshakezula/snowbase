@@ -4,7 +4,7 @@
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   $(function() {
-    var AppView, Resort, ResortCollection, ResortDataPane, ResortView, Resorts, SnowDay, SnowDayCollection, SnowDays, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6;
+    var AppView, Resort, ResortCollection, ResortDataPane, ResortView, Resorts, _ref, _ref1, _ref2, _ref3, _ref4;
 
     console.log('main script loaded');
     Resort = (function(_super) {
@@ -20,94 +20,28 @@
       return Resort;
 
     })(Backbone.Model);
-    SnowDay = (function(_super) {
-      __extends(SnowDay, _super);
-
-      function SnowDay() {
-        _ref1 = SnowDay.__super__.constructor.apply(this, arguments);
-        return _ref1;
-      }
-
-      SnowDay.prototype.idAttribute = "_id";
-
-      return SnowDay;
-
-    })(Backbone.Model);
-    SnowDayCollection = (function(_super) {
-      __extends(SnowDayCollection, _super);
-
-      function SnowDayCollection() {
-        _ref2 = SnowDayCollection.__super__.constructor.apply(this, arguments);
-        return _ref2;
-      }
-
-      SnowDayCollection.prototype.model = SnowDay;
-
-      SnowDayCollection.prototype.url = '/api/snow-days';
-
-      SnowDayCollection.prototype.initialize = function() {
-        this._resortMap = {};
-        this._correctedResortMap = {};
-        this.on('add', this._addModelToMaps);
-        return this.on('reset', this._addAllModelsToMaps);
-      };
-
-      SnowDayCollection.prototype._addModelToMaps = function(model) {
-        var date, resortName, season;
-
-        resortName = model.get('resortName');
-        date = new Date(model.get('snowDate'));
-        if (date.getMonth() > 9) {
-          season = date.getFullYear() + '-' + (date.getFullYear() + 1).toString().slice(-2);
-        } else if (date.getMonth() < 4) {
-          season = (date.getFullYear() - 1) + '-' + date.getFullYear().toString().slice(-2);
-        } else {
-          return;
-        }
-        if (!this._resortMap[resortName]) {
-          this._resortMap[resortName] = {};
-        }
-        if (!this._resortMap[resortName][season]) {
-          this._resortMap[resortName][season] = {};
-        }
-        return this._resortMap[resortName][season][model.get('snowDateString')] = model;
-      };
-
-      SnowDayCollection.prototype._addAllModelsToMaps = function() {
-        var _this = this;
-
-        this._resortMap = {};
-        return _.each(this.models, function(model) {
-          return _this._addModelToMaps(model);
-        });
-      };
-
-      return SnowDayCollection;
-
-    })(Backbone.Collection);
     ResortCollection = (function(_super) {
       __extends(ResortCollection, _super);
 
       function ResortCollection() {
-        _ref3 = ResortCollection.__super__.constructor.apply(this, arguments);
-        return _ref3;
+        _ref1 = ResortCollection.__super__.constructor.apply(this, arguments);
+        return _ref1;
       }
 
       ResortCollection.prototype.model = Resort;
 
-      ResortCollection.prototype.url = '/api/resorts';
+      ResortCollection.prototype.url = 'http://localhost:5000/resorts';
 
       return ResortCollection;
 
     })(Backbone.Collection);
-    SnowDays = new SnowDayCollection();
     Resorts = new ResortCollection();
     ResortView = (function(_super) {
       __extends(ResortView, _super);
 
       function ResortView() {
-        _ref4 = ResortView.__super__.constructor.apply(this, arguments);
-        return _ref4;
+        _ref2 = ResortView.__super__.constructor.apply(this, arguments);
+        return _ref2;
       }
 
       ResortView.prototype.className = 'resort-list-item';
@@ -132,8 +66,8 @@
       __extends(ResortDataPane, _super);
 
       function ResortDataPane() {
-        _ref5 = ResortDataPane.__super__.constructor.apply(this, arguments);
-        return _ref5;
+        _ref3 = ResortDataPane.__super__.constructor.apply(this, arguments);
+        return _ref3;
       }
 
       ResortDataPane.prototype.el = $('#resort-data-pane');
@@ -141,6 +75,7 @@
       ResortDataPane.prototype.initialize = function() {
         var _this = this;
 
+        this.dataMap = {};
         this.chartData = [];
         this.listenTo(Backbone.Events, 'resortClicked', this.clickHandler);
         this.paletteStep = -1;
@@ -257,15 +192,15 @@
 
         this.paletteStep = -1;
         this.chartData = [];
-        this.thisSeasonName = _.last((_.keys(SnowDays._resortMap[this.model.get('name')])).sort());
-        _.each(SnowDays._resortMap[this.model.get('name')], function(snowDays, seasonName) {
+        this.thisSeasonName = _.last((_.keys(this.dataMap)).sort());
+        _.each(this.dataMap, function(snowDays, seasonName) {
           var seasonData;
 
           seasonData = [];
           _.each(snowDays, function(snowDay) {
             return seasonData.push({
-              x: snowDay.get('seasonDay'),
-              y: snowDay.get('snowBase')
+              x: snowDay.season_day,
+              y: snowDay.base
             });
           });
           return _this.chartData.push({
@@ -281,12 +216,32 @@
       };
 
       ResortDataPane.prototype.clickHandler = function(model) {
+        var callback, req, requestURI,
+          _this = this;
+
         this.model = model;
         this.$('#resort-name').html(this.model.get('name'));
-        if (SnowDays._resortMap[this.model.get('name')] && _.size(SnowDays._resortMap[this.model.get('name')]) > 0) {
-          this.populateChartData();
-          return this.renderChart();
-        }
+        callback = function(data) {
+          _this.dataMap = data;
+          _this.populateChartData();
+          return _this.renderChart();
+        };
+        requestURI = 'http://localhost:5000/snow-days/' + this.model.get('name');
+        req = new XMLHttpRequest();
+        req.addEventListener('readystatechange', function() {
+          var data;
+
+          if (req.readyState === 4) {
+            if (req.status === 200 || req.status === 304) {
+              data = eval('(' + req.responseText + ')');
+              return callback(data);
+            } else {
+              return console.log('Error loading data');
+            }
+          }
+        });
+        req.open('GET', requestURI, false);
+        return req.send();
       };
 
       return ResortDataPane;
@@ -296,16 +251,15 @@
       __extends(AppView, _super);
 
       function AppView() {
-        _ref6 = AppView.__super__.constructor.apply(this, arguments);
-        return _ref6;
+        _ref4 = AppView.__super__.constructor.apply(this, arguments);
+        return _ref4;
       }
 
       AppView.prototype.el = $('#app');
 
       AppView.prototype.initialize = function() {
         Resorts.bind('sync', this.render, this);
-        Resorts.fetch();
-        return SnowDays.fetch();
+        return Resorts.fetch();
       };
 
       AppView.prototype.appendResort = function(resort) {

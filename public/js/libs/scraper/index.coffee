@@ -4,7 +4,7 @@ db = require '../../../../db'
 
 # resorts = ['arapahoe-basin-ski-area', 'breckenridge']
 
-evalFunction = (page, ph, data, callback)->
+evalFunction = (page, ph, resort, callback)->
 	#Inject jQuery
 	page.includeJs "//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js", () ->
 		console.log 'starting evaluate function'
@@ -27,38 +27,40 @@ evalFunction = (page, ph, data, callback)->
 					baseDepthInches: parseInt cols[3].innerHTML.match(/[0-9]+/)[0]	
 			JSON.stringify resultsObj
 		, (result)->
-			populatePullResults data, result, callback
+			populatePullResults resort, result, callback
 			ph.exit()
 
-populatePullResults = (data, result, callback) ->
-	resultJSON = JSON.parse result
+populatePullResults = (resort, result, callback) ->
+	resultJSON = if (typeof result == 'object') then result else JSON.parse result
 	_.each resultJSON, (v, k) ->
-		#Look for existing snowday
-		db.SnowDay.findOne {resortName: data.resort.name, snowDateString: v.dateString}, (err, result) ->
+		if v.date.getMonth() > 9 && v.date.getMonth() < 4
+			#Look for existing snowday
+			db.SnowDay.findOne {resortName: resort.name, snowDateString: v.dateString || v.date_string}, (err, result) ->
 
-			#find or create
-			if result
-				console.log 'found existing snowday: %s, skipping', result.snowDateString
-				# snowDay = result
-			else
-				console.log 'creating new snowday'
-				snowDay = new db.SnowDay()
-				#update attrs
-				snowDay.resortName = data.resort.name
-				snowDay.resortId = data.resort._id
-				snowDay.snowDate = v.date
-				snowDay.snowDateString = v.dateString
-				snowDay.snowBase = v.baseDepthInches
-				snowDay.precipitation = v.newSnowInches
-				snowDay.seasonSnow = v.seasonSnowInches
-				snowDay.save (err) ->
-					if err
-						console.log 'error saving snow day'
-					else
-						console.log 'snow day saved'
+				#find or create
+				if result
+					console.log 'found existing snowday: %s, skipping', result.snowDateString
+					# snowDay = result
+				else
+					console.log 'creating new snowday'
+					snowDay = new db.SnowDay()
+					#update attrs
+					snowDay.resortName = resort.name
+					snowDay.resortId = resort._id
+					snowDay.snowDate = v.date
+					snowDay.snowDateString = v.dateString || v.date_string
+					snowDay.snowBase = v.baseDepthInches || v.base
+					snowDay.precipitation = v.newSnowInches || v.precipitation
+					snowDay.seasonSnow = v.seasonSnowInches || v.season_snow
+					snowDay.save (err) ->
+						if err
+							console.log 'error saving snow day'
+						else
+							console.log 'snow day saved'
 	callback resultJSON
+exports.populatePullResults = populatePullResults
 
-scrapePage = (url, data, callback) ->
+scrapePage = (url, resort, callback) ->
 	console.log 'creating phantom instance for %s', url
 	phantom.create (ph)->
 		console.log 'creating phantom page for %s', url 
@@ -68,11 +70,11 @@ scrapePage = (url, data, callback) ->
 			page.open url, (status)->
 				console.log 'Opening site: ', url
 				console.log 'Opened site? ', status
-				evalFunction page, ph, data, callback
+				evalFunction page, ph, resort, callback
 
 exports.scrape = (resort, callback) ->
 	if !resort then return
 	years = ['2009', '2010', '2011', '2012', '2013']
 	for i in [0...years.length]
 		url = 'http://www.onthesnow.com/colorado/' + resort.name + '/historical-snowfall.html?&y=' + years[i] + '&q=base&v=list#view'
-		scrapePage url, {resort: resort, year: years[i]}, callback
+		scrapePage url, resort, callback
