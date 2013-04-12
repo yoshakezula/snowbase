@@ -60,9 +60,7 @@ populatePullResults = (data, result, callback) ->
 
 scrapePage = (url, data, callback) ->
 	console.log 'creating phantom instance for %s', url
-	console.log phantom
-	try
-		phantom.create (ph)->
+	phantom.create (ph)->
 		console.log 'creating phantom page for %s', url 
 		ph.createPage (page)->
 			console.log 'phantom page created for %s', url
@@ -71,8 +69,6 @@ scrapePage = (url, data, callback) ->
 				console.log 'Opening site: ', url
 				console.log 'Opened site? ', status
 				evalFunction page, ph, data, callback
-	catch
-		console.log 'ERROR creating phantom instance for %s', url
 
 exports.scrape = (resort, callback) ->
 	if !resort then return
