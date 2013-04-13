@@ -58,8 +58,9 @@ $ ->
 			@paletteStep = -1
 			@rgba = $('html').hasClass 'rgba'
 			@paletteHEX = [
-				'#C6E774'
-				# '#337EFF'
+				'#39cc67' #aqua
+				# '#C6E774' #green
+				# '#337EFF' #blue
 				'#70A5FF'
 				'#85B1FF'
 				'#99BEFF'
@@ -167,7 +168,11 @@ $ ->
 		populateChartData: () ->
 			@paletteStep = -1
 			@chartData = []
-			@thisSeasonName = _.last((_.keys SnowDays._resortMap[@model.get('name')]).sort())
+			seasonNames = (_.keys SnowDays._resortMap[@model.get('name')]).sort().reverse()
+			colorMap = {}
+			_.each seasonNames, (seasonName) =>
+				colorMap[seasonName] = @getColor()
+			@thisSeasonName = _.first(seasonNames)
 			_.each SnowDays._resortMap[@model.get('name')], (snowDays, seasonName) =>
 				seasonData = []
 				_.each snowDays, (snowDay) ->
@@ -177,8 +182,8 @@ $ ->
 				@chartData.push 
 					name: seasonName
 					data: seasonData
-					color: @getColor()
-					stroke: if seasonName == @thisSeasonName then 'rgba(255,255,255,0.8)' else 'rgba(0,0,0,0.15)'
+					color: colorMap[seasonName]
+					stroke: if seasonName == @thisSeasonName then 'rgba(255,255,255,0.8)' else 'rgba(0,0,0,0.25)'
 			@chartData = _.sortBy @chartData, (series) -> series.name
 
 		clickHandler: (model) ->

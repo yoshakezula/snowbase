@@ -138,7 +138,7 @@
         this.listenTo(Backbone.Events, 'resortClicked', this.clickHandler);
         this.paletteStep = -1;
         this.rgba = $('html').hasClass('rgba');
-        this.paletteHEX = ['#C6E774', '#70A5FF', '#85B1FF', '#99BEFF', '#ADCBFF', '#C2D8FF', '#D6E5FF', '#EBF2FF'];
+        this.paletteHEX = ['#39cc67', '#70A5FF', '#85B1FF', '#99BEFF', '#ADCBFF', '#C2D8FF', '#D6E5FF', '#EBF2FF'];
         return this.paletteRGBA = _.map(this.paletteHEX, function(color) {
           return _this.colorToRGBA(color).rgba;
         });
@@ -246,11 +246,17 @@
       };
 
       ResortDataPane.prototype.populateChartData = function() {
-        var _this = this;
+        var colorMap, seasonNames,
+          _this = this;
 
         this.paletteStep = -1;
         this.chartData = [];
-        this.thisSeasonName = _.last((_.keys(SnowDays._resortMap[this.model.get('name')])).sort());
+        seasonNames = (_.keys(SnowDays._resortMap[this.model.get('name')])).sort().reverse();
+        colorMap = {};
+        _.each(seasonNames, function(seasonName) {
+          return colorMap[seasonName] = _this.getColor();
+        });
+        this.thisSeasonName = _.first(seasonNames);
         _.each(SnowDays._resortMap[this.model.get('name')], function(snowDays, seasonName) {
           var seasonData;
 
@@ -264,8 +270,8 @@
           return _this.chartData.push({
             name: seasonName,
             data: seasonData,
-            color: _this.getColor(),
-            stroke: seasonName === _this.thisSeasonName ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.15)'
+            color: colorMap[seasonName],
+            stroke: seasonName === _this.thisSeasonName ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.25)'
           });
         });
         return this.chartData = _.sortBy(this.chartData, function(series) {
