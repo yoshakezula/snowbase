@@ -51,16 +51,28 @@ exports.init = (app) ->
 				res.send 'error'
 			else
 				fetchData resort, (results) ->
-					scraper.populatePullResults resort, results, (JSON) ->
-						res.send JSON
+					res.send result.to_json
 
 	app.get '/api/resorts', (req, res) ->
-		db.Resort.find (err, results) ->
-			res.send results
+		request {url: 'http://snowbase-api.kennychan.co/resorts', json: true}, (error, response, body) ->
+				if !error && response.statusCode == 200
+					res.send body
+				else
+					res.send 'error'
 
 	app.get '/api/snow-days', (req, res) ->
-		db.SnowDay.find (err, results) ->
-			res.send results
+		request {url: 'http://snowbase-api.kennychan.co/snow-days', json: true}, (error, response, body) ->
+				if !error && response.statusCode == 200
+					res.send body
+				else
+					res.send 'error'
+
+	app.get '/api/snow-days/:name', (req, res) ->
+		request {url: 'http://snowbase-api.kennychan.co/snow-days/' + req.params.name, json: true}, (error, response, body) ->
+				if !error && response.statusCode == 200
+					res.send body
+				else
+					res.send 'error'
 
 	app.get '/api/normalize-snow-data', (req, res) ->
 		db.normalizeSnowData (results) ->
