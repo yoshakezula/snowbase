@@ -25,22 +25,51 @@ body
 	position relative
 	.rickshaw_legend
 		color: #333
-		background-color: #eee
+		background-color transparent
 		position absolute
 		top 0
 		left 0
 		.action
 			color #333
+			opacity 1
+			&:hover
+				text-decoration none
+		.label
+			font-weight bold
 
+	.x_label
+		bottom 0
+		opacity 0.9
+
+.chart-hover-date
+	padding 5px 5px 10px
+	font-size 16px
+	font-weight bold
+
+.this-season-base, .past-season-base
+	.lowest-base-label
+		color red
+	.highest-base-label
+		color green
+	.lowest-base-label, .highest-base-label
+		font-size 12px
 
 .this-season-base
-	padding 5px
+	padding 5px 5px 0
 	font-size 16px
 
 .past-season-base
 	color #aaa
 	padding 0 5px
 	font-size 14px
+
+.this-season-base-comparison-stats
+	font-size 14px
+	padding 0 5px 10px
+	font-style italic
+	color #eee
+	.base-comparison-above-below
+		font-weight bold
 
 #resort-name
 	font-size 40px

@@ -133,33 +133,74 @@ $ ->
 				graph: graph
 				legend: legend
 
+			dateMap = @dateMap
+			monthArray = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 			Hover = Rickshaw.Class.create Rickshaw.Graph.HoverDetail, 
 				render: (args) ->
-					# console.log args
-
+					#Get name of this season (the most current one)
 					thisSeason = _.last _.sortBy(args.detail, (series) -> series.name)
+
+					#Get array of other season names
 					otherSeasons = _.sortBy (_.filter args.detail, (series) -> series.name != thisSeason.name), (series) -> series.name
 					otherSeasons = otherSeasons.reverse()
 
-					content = '<div class="chart-hover-line this-season-base"><b>' + thisSeason.name + '</b>: ' + thisSeason.value.y.toFixed(0) + ' in.</div>'
+					# set date string to use in hover detail
+					date = new Date(dateMap[thisSeason.value.x])
+					dateString = monthArray[date.getMonth()] + ' ' + date.getDate()
+
+					# get comparison stats
+					maxBase = 0
+					minBase = 9999
+					maxSeasonName = ''
+					minSeasonName = ''
+					baseAvg = 0
+					_.each args.detail, (series) ->
+						baseAvg += series.value.y
+						if series.value.y > maxBase
+							maxSeasonName = series.name
+							maxBase = series.value.y
+						if series.value.y < minBase
+							minSeasonName = series.name
+							minBase = series.value.y
+
+					baseAvg = baseAvg / args.detail.length
+					baseCompPercentage = ((thisSeason.value.y / baseAvg) - 1) * 100
+					baseCompString = Math.abs(baseCompPercentage.toFixed(0)) + '% <span class="base-comparison-above-below">' + (if baseCompPercentage < 0 then 'below' else 'above') + '</span> average'
+
+					# Write date on hover label
+					content = '<div class="chart-hover-date">' + dateString + '</div>'
+
+					#Write this season's base amount in hover label
+					content += '<div class="this-season-base"><b>' + thisSeason.name + '</b>: ' + thisSeason.value.y.toFixed(0) + ' in.'
+					if thisSeason.name == maxSeasonName then content += ' <span class="highest-base-label">HIGH</span>'
+					if thisSeason.name == minSeasonName then content += ' <span class="lowest-base-label">LOW</span>'
+					content += '</div>'
+					content += '<div class="this-season-base-comparison-stats">' + baseCompString + '</div>'
+
+					#Write past seasons' base amount in hover label
 					_.each otherSeasons, (season) ->
-						content += '<div class="chart-hover-line past-season-base"><b>' + season.name + '</b>: ' + season.value.y.toFixed(0) + ' in.</div>'
-					
-					# pointYValue = _.find args.points, (series) -> series.name = thisSeason.name
+						content += '<div class="past-season-base"><b>' + season.name + '</b>: ' + season.value.y.toFixed(0) + ' in.'
+						if season.name == maxSeasonName then content += ' <span class="highest-base-label">HIGH</span>'
+						if season.name == minSeasonName then content += ' <span class="lowest-base-label">LOW</span>'
+						content += '</div>'
 
 					label = document.createElement 'div'
 					label.className = 'item active'
 					label.innerHTML = content
 					label.style.top = graph.y(thisSeason.value.y0 + thisSeason.value.y) + 'px'
-
 					@element.appendChild label
+
 
 					dot = document.createElement 'div'
 					dot.className = 'dot active'
 					dot.style.top = label.style.top
 					dot.style.borderColor = thisSeason.series.color
-
 					@element.appendChild dot
+
+					# xLabel = document.createElement 'div'
+					# xLabel.className = 'x_label'
+					# xLabel.innerHTML = monthArray[date.getMonth()] + ' ' + date.getDate()
+					# @element.appendChild xLabel
 
 					@show()
 
@@ -168,6 +209,8 @@ $ ->
 		populateChartData: () ->
 			@paletteStep = -1
 			@chartData = []
+			@dateMap = {}
+
 			seasonNames = (_.keys SnowDays._resortMap[@model.get('name')]).sort().reverse()
 			colorMap = {}
 			_.each seasonNames, (seasonName) =>
@@ -175,10 +218,15 @@ $ ->
 			@thisSeasonName = _.first(seasonNames)
 			_.each SnowDays._resortMap[@model.get('name')], (snowDays, seasonName) =>
 				seasonData = []
-				_.each snowDays, (snowDay) ->
+				_.each snowDays, (snowDay) =>
+					#push to seasonData, which we'll use for the chart data
 					seasonData.push
 						x: snowDay.get 'season_day'
 						y: snowDay.get 'base'
+					
+					#Push to the date map, so we can match up the "season day" with a date
+					@dateMap[snowDay.get 'season_day'] = snowDay.get('date')
+
 				@chartData.push 
 					name: seasonName
 					data: seasonData

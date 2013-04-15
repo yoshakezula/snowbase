@@ -3,10 +3,19 @@ body{background-image:url("../img/wall4.png");-webkit-user-select:none;-moz-user
 #app{padding-top:20px}
 #resort-list{margin-top:40px}
 #resort-data{position:relative;}
-#resort-data .rickshaw_legend{color:#333;background-color:#eee;position:absolute;top:0;left:0;}
-#resort-data .rickshaw_legend .action{color:#333}
-.this-season-base{padding:5px;font-size:16px}
+#resort-data .rickshaw_legend{color:#333;background-color:transparent;position:absolute;top:0;left:0;}
+#resort-data .rickshaw_legend .action{color:#333;opacity:1;-ms-filter:none;filter:none;}
+#resort-data .rickshaw_legend .action:hover{text-decoration:none}
+#resort-data .rickshaw_legend .label{font-weight:bold}
+#resort-data .x_label{bottom:0;opacity:.9;filter:alpha(opacity=90);-ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=90)"}
+.chart-hover-date{padding:5px 5px 10px;font-size:16px;font-weight:bold}
+.this-season-base .lowest-base-label,.past-season-base .lowest-base-label{color:#f00}
+.this-season-base .highest-base-label,.past-season-base .highest-base-label{color:#008000}
+.this-season-base .lowest-base-label,.past-season-base .lowest-base-label,.this-season-base .highest-base-label,.past-season-base .highest-base-label{font-size:12px}
+.this-season-base{padding:5px 5px 0;font-size:16px}
 .past-season-base{color:#aaa;padding:0 5px;font-size:14px}
+.this-season-base-comparison-stats{font-size:14px;padding:0 5px 10px;font-style:italic;color:#eee;}
+.this-season-base-comparison-stats .base-comparison-above-below{font-weight:bold}
 #resort-name{font-size:40px;font-weight:bold;line-height:1}
 .resort-list-item{margin:5px;cursor:pointer;-webkit-transition:all .5s;-moz-transition:all .5s;-o-transition:all .5s;-ms-transition:all .5s;transition:all .5s;}
 .resort-list-item:hover,.resort-list-item.resort-list-item-selected{font-weight:bold;padding-left:5px}

@@ -177,7 +177,7 @@
       };
 
       ResortDataPane.prototype.renderChart = function() {
-        var Hover, chartHeight, chartWidth, graph, highlighter, hover, legend, shelving;
+        var Hover, chartHeight, chartWidth, dateMap, graph, highlighter, hover, legend, monthArray, shelving;
 
         this.$('.rickshaw_graph, .legend, .chart-slider').remove();
         this.$('#resort-data').html('<div class="rickshaw_graph"></div><div class="legend"></div><div class="chart-slider"></div>');
@@ -210,9 +210,11 @@
           graph: graph,
           legend: legend
         });
+        dateMap = this.dateMap;
+        monthArray = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         Hover = Rickshaw.Class.create(Rickshaw.Graph.HoverDetail, {
           render: function(args) {
-            var content, dot, label, otherSeasons, thisSeason;
+            var baseAvg, baseCompPercentage, baseCompString, content, date, dateString, dot, label, maxBase, maxSeasonName, minBase, minSeasonName, otherSeasons, thisSeason;
 
             thisSeason = _.last(_.sortBy(args.detail, function(series) {
               return series.name;
@@ -223,9 +225,46 @@
               return series.name;
             });
             otherSeasons = otherSeasons.reverse();
-            content = '<div class="chart-hover-line this-season-base"><b>' + thisSeason.name + '</b>: ' + thisSeason.value.y.toFixed(0) + ' in.</div>';
+            date = new Date(dateMap[thisSeason.value.x]);
+            dateString = monthArray[date.getMonth()] + ' ' + date.getDate();
+            maxBase = 0;
+            minBase = 9999;
+            maxSeasonName = '';
+            minSeasonName = '';
+            baseAvg = 0;
+            _.each(args.detail, function(series) {
+              baseAvg += series.value.y;
+              if (series.value.y > maxBase) {
+                maxSeasonName = series.name;
+                maxBase = series.value.y;
+              }
+              if (series.value.y < minBase) {
+                minSeasonName = series.name;
+                return minBase = series.value.y;
+              }
+            });
+            baseAvg = baseAvg / args.detail.length;
+            baseCompPercentage = ((thisSeason.value.y / baseAvg) - 1) * 100;
+            baseCompString = Math.abs(baseCompPercentage.toFixed(0)) + '% <span class="base-comparison-above-below">' + (baseCompPercentage < 0 ? 'below' : 'above') + '</span> average';
+            content = '<div class="chart-hover-date">' + dateString + '</div>';
+            content += '<div class="this-season-base"><b>' + thisSeason.name + '</b>: ' + thisSeason.value.y.toFixed(0) + ' in.';
+            if (thisSeason.name === maxSeasonName) {
+              content += ' <span class="highest-base-label">HIGH</span>';
+            }
+            if (thisSeason.name === minSeasonName) {
+              content += ' <span class="lowest-base-label">LOW</span>';
+            }
+            content += '</div>';
+            content += '<div class="this-season-base-comparison-stats">' + baseCompString + '</div>';
             _.each(otherSeasons, function(season) {
-              return content += '<div class="chart-hover-line past-season-base"><b>' + season.name + '</b>: ' + season.value.y.toFixed(0) + ' in.</div>';
+              content += '<div class="past-season-base"><b>' + season.name + '</b>: ' + season.value.y.toFixed(0) + ' in.';
+              if (season.name === maxSeasonName) {
+                content += ' <span class="highest-base-label">HIGH</span>';
+              }
+              if (season.name === minSeasonName) {
+                content += ' <span class="lowest-base-label">LOW</span>';
+              }
+              return content += '</div>';
             });
             label = document.createElement('div');
             label.className = 'item active';
@@ -251,6 +290,7 @@
 
         this.paletteStep = -1;
         this.chartData = [];
+        this.dateMap = {};
         seasonNames = (_.keys(SnowDays._resortMap[this.model.get('name')])).sort().reverse();
         colorMap = {};
         _.each(seasonNames, function(seasonName) {
@@ -262,10 +302,11 @@
 
           seasonData = [];
           _.each(snowDays, function(snowDay) {
-            return seasonData.push({
+            seasonData.push({
               x: snowDay.get('season_day'),
               y: snowDay.get('base')
             });
+            return _this.dateMap[snowDay.get('season_day')] = snowDay.get('date');
           });
           return _this.chartData.push({
             name: seasonName,
