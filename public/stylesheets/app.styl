@@ -18,8 +18,32 @@ body
 #app
   padding-top 20px
 
-#resort-list
+#resort-list-wrapper
   margin-top 40px
+
+#resort-list-search-box-wrapper
+  position relative
+
+#resort-list-search-icon
+  position absolute
+  bottom 5px
+  left 2px
+
+#resort-list-search-box
+  background-color transparent
+  border-top none
+  border-left none
+  border-right none
+  border-bottom 1px dotted #aaa
+  width 98%
+  padding-left 20px
+  margin-
+  &:focus
+    outline none
+    background-color rgba(0,0,0,0.4)
+    transition background-color 0.5s
+    color: white
+
 
 #resort-data
   position relative
@@ -67,19 +91,10 @@ body
     0 0 20px rgba(255, 255, 255, 0.45);
 
     animation: slick-loading 0.85s ease-in-out infinite alternate
-
-    &:nth-child(2)
-      animation-delay 0.15s
-    &:nth-child(3)
-      animation-delay 0.30s
-    &:nth-child(4)
-      animation-delay 0.45s
-    &:nth-child(5)
-      animation-delay 0.60s
-    &:nth-child(6)
-      animation-delay 0.75s
-    &:nth-child(7)
-      animation-delay 0.90s
+    
+    for child in 2 3 4 5 6 7
+      &:nth-child({child})
+        animation-delay 0.15s * (child - 1)
 
 @keyframes slick-loading
   to {text-shadow:
@@ -126,7 +141,12 @@ body
 .resort-list-item
   margin 5px
   cursor pointer
-  transition all 0.5s
+  transition all ease-in-out 0.5s
+  &.slide-down
+    height 0
+    margin 0
+    color transparent
+    transform translateX(-300px)
   &:hover, &.resort-list-item-selected
     font-weight bold
     padding-left 5px

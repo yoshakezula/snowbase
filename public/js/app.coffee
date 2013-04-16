@@ -44,6 +44,7 @@ $ ->
 
 		clickHandler: () ->
 			Backbone.Events.trigger 'resortClicked', @model
+			@el.addClass 'resort-list-item-selected'
 
 		render: () ->
 			@$el.html @model.get 'formatted_name'
@@ -256,6 +257,25 @@ $ ->
 			@populateChartData()
 			@renderChart()
 
+	class ResortSearchBox extends Backbone.View
+		el: $ '#resort-list-search-box'
+		initialize: () ->
+			@$el = $ @el
+		events: 
+			'keyup' : 'filterResults'
+
+		filterResults: () ->
+			if @$el.val()
+				filter = @$el.val().trim().toUpperCase()
+			if filter
+				_.each $('.resort-list-item'), (resortItem) ->
+					if $(resortItem).text().toUpperCase().indexOf(filter) > -1
+						$(resortItem).removeClass 'slide-down'
+					else
+						$(resortItem).addClass 'slide-down'
+			else
+				$('.resort-list-item').removeClass 'slide-down'
+
 	class AppView extends Backbone.View
 		el: $ '#app'
 		initialize: () ->
@@ -269,14 +289,20 @@ $ ->
 			@$('#resort-list').append resortView.render().el
 
 		appendAllResorts: () ->
-			_.each Resorts.models, (resort) =>
+			sortedResortList = _.sortBy Resorts.models, (resort) ->
+				resort.get 'formatted_name'
+			_.each sortedResortList, (resort) =>
 				@appendResort resort
 
 		renderResortDataPane: () ->
 			@resortDataPane = new ResortDataPane()
 
+		initResortSearchBox: () ->
+			@resortSearchBox = new ResortSearchBox()
+
 		render: () ->
 			@appendAllResorts()
+			@initResortSearchBox()
 			@renderResortDataPane()
 
 	new AppView()

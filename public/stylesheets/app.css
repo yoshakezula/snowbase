@@ -1,7 +1,11 @@
 html,body{margin:0;padding:0}
 body{background-image:url("../img/wall4.png");-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;font-family:"Open Sans","Helvetica Neue",Helvetica,Arial,sans-serif !important;-webkit-font-smoothing:antialiased}
 #app{padding-top:20px}
-#resort-list{margin-top:40px}
+#resort-list-wrapper{margin-top:40px}
+#resort-list-search-box-wrapper{position:relative}
+#resort-list-search-icon{position:absolute;bottom:5px;left:2px}
+#resort-list-search-box{background-color:transparent;border-top:none;border-left:none;border-right:none;border-bottom:1px dotted #aaa;width:98%;padding-left:20px;}
+#resort-list-search-box margin-,#resort-list-search-box:focus{outline:none;background-color:rgba(0,0,0,0.4);-webkit-transition:background-color .5s;-moz-transition:background-color .5s;-o-transition:background-color .5s;-ms-transition:background-color .5s;transition:background-color .5s;color:#fff}
 #resort-data{position:relative;}
 #resort-data .rickshaw_legend{color:#333;background-color:transparent;position:absolute;top:0;left:0;}
 #resort-data .rickshaw_legend .action{color:#333;opacity:1;-ms-filter:none;filter:none;}
@@ -13,10 +17,10 @@ body{background-image:url("../img/wall4.png");-webkit-user-select:none;-moz-user
 .slick-loading-message span{text-shadow:0 0 2px rgba(204,208,212,0.9),0 15px 25px rgba(0,0,0,0.3),0 -2px 3px rgba(0,0,0,0.1),0 -5px 10px rgba(255,255,255,0.5),0 5px 10px rgba(0,0,0,0.3),0 3px 4px rgba(255,255,255,0.2),0 0 20px rgba(255,255,255,0.45);-webkit-animation:slick-loading .85s ease-in-out infinite alternate;-moz-animation:slick-loading .85s ease-in-out infinite alternate;-o-animation:slick-loading .85s ease-in-out infinite alternate;-ms-animation:slick-loading .85s ease-in-out infinite alternate;animation:slick-loading .85s ease-in-out infinite alternate;}
 .slick-loading-message span:nth-child(2){-webkit-animation-delay:.15s;-moz-animation-delay:.15s;-o-animation-delay:.15s;-ms-animation-delay:.15s;animation-delay:.15s}
 .slick-loading-message span:nth-child(3){-webkit-animation-delay:.3s;-moz-animation-delay:.3s;-o-animation-delay:.3s;-ms-animation-delay:.3s;animation-delay:.3s}
-.slick-loading-message span:nth-child(4){-webkit-animation-delay:.45s;-moz-animation-delay:.45s;-o-animation-delay:.45s;-ms-animation-delay:.45s;animation-delay:.45s}
+.slick-loading-message span:nth-child(4){-webkit-animation-delay:.44999999999999996s;-moz-animation-delay:.44999999999999996s;-o-animation-delay:.44999999999999996s;-ms-animation-delay:.44999999999999996s;animation-delay:.44999999999999996s}
 .slick-loading-message span:nth-child(5){-webkit-animation-delay:.6s;-moz-animation-delay:.6s;-o-animation-delay:.6s;-ms-animation-delay:.6s;animation-delay:.6s}
 .slick-loading-message span:nth-child(6){-webkit-animation-delay:.75s;-moz-animation-delay:.75s;-o-animation-delay:.75s;-ms-animation-delay:.75s;animation-delay:.75s}
-.slick-loading-message span:nth-child(7){-webkit-animation-delay:.9s;-moz-animation-delay:.9s;-o-animation-delay:.9s;-ms-animation-delay:.9s;animation-delay:.9s}
+.slick-loading-message span:nth-child(7){-webkit-animation-delay:.8999999999999999s;-moz-animation-delay:.8999999999999999s;-o-animation-delay:.8999999999999999s;-ms-animation-delay:.8999999999999999s;animation-delay:.8999999999999999s}
 .this-season-base .lowest-base-label,.past-season-base .lowest-base-label{color:#f00}
 .this-season-base .highest-base-label,.past-season-base .highest-base-label{color:#008000}
 .this-season-base .lowest-base-label,.past-season-base .lowest-base-label,.this-season-base .highest-base-label,.past-season-base .highest-base-label{font-size:12px}
@@ -25,7 +29,8 @@ body{background-image:url("../img/wall4.png");-webkit-user-select:none;-moz-user
 .this-season-base-comparison-stats{font-size:14px;padding:0 5px 10px;font-style:italic;color:#eee;}
 .this-season-base-comparison-stats .base-comparison-above-below{font-weight:bold}
 #resort-name{font-size:40px;font-weight:bold;line-height:1}
-.resort-list-item{margin:5px;cursor:pointer;-webkit-transition:all .5s;-moz-transition:all .5s;-o-transition:all .5s;-ms-transition:all .5s;transition:all .5s;}
+.resort-list-item{margin:5px;cursor:pointer;-webkit-transition:all ease-in-out .5s;-moz-transition:all ease-in-out .5s;-o-transition:all ease-in-out .5s;-ms-transition:all ease-in-out .5s;transition:all ease-in-out .5s;}
+.resort-list-item.slide-down{height:0;margin:0;color:transparent;-webkit-transform:translateX(-300px);-moz-transform:translateX(-300px);-o-transform:translateX(-300px);-ms-transform:translateX(-300px);transform:translateX(-300px)}
 .resort-list-item:hover,.resort-list-item.resort-list-item-selected{font-weight:bold;padding-left:5px}
 @-moz-keyframes slick-loading{100%{text-shadow:0 0 2px rgba(204,208,212,0.2),0 0 3px rgba(0,0,0,0.02),0 0 0 rgba(0,0,0,0),0 0 0 rgba(255,255,255,0),0 0 0 rgba(0,0,0,0),0 0 0 rgba(255,255,255,0),0 0 0 rgba(255,255,255,0)}
 }@-webkit-keyframes slick-loading{100%{text-shadow:0 0 2px rgba(204,208,212,0.2),0 0 3px rgba(0,0,0,0.02),0 0 0 rgba(0,0,0,0),0 0 0 rgba(255,255,255,0),0 0 0 rgba(0,0,0,0),0 0 0 rgba(255,255,255,0),0 0 0 rgba(255,255,255,0)}

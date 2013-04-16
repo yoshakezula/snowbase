@@ -3,7 +3,7 @@
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   $(function() {
-    var AppView, Resort, ResortCollection, ResortDataPane, ResortView, Resorts, SnowDay, SnowDayCollection, SnowDays, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6;
+    var AppView, Resort, ResortCollection, ResortDataPane, ResortSearchBox, ResortView, Resorts, SnowDay, SnowDayCollection, SnowDays, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7;
 
     Resort = (function(_super) {
       __extends(Resort, _super);
@@ -108,7 +108,8 @@
       };
 
       ResortView.prototype.clickHandler = function() {
-        return Backbone.Events.trigger('resortClicked', this.model);
+        Backbone.Events.trigger('resortClicked', this.model);
+        return this.el.addClass('resort-list-item-selected');
       };
 
       ResortView.prototype.render = function() {
@@ -345,12 +346,52 @@
       return ResortDataPane;
 
     })(Backbone.View);
+    ResortSearchBox = (function(_super) {
+      __extends(ResortSearchBox, _super);
+
+      function ResortSearchBox() {
+        _ref6 = ResortSearchBox.__super__.constructor.apply(this, arguments);
+        return _ref6;
+      }
+
+      ResortSearchBox.prototype.el = $('#resort-list-search-box');
+
+      ResortSearchBox.prototype.initialize = function() {
+        return this.$el = $(this.el);
+      };
+
+      ResortSearchBox.prototype.events = {
+        'keyup': 'filterResults'
+      };
+
+      ResortSearchBox.prototype.filterResults = function() {
+        var filter;
+
+        if (this.$el.val()) {
+          filter = this.$el.val().trim().toUpperCase();
+        }
+        if (filter) {
+          return _.each($('.resort-list-item'), function(resortItem) {
+            if ($(resortItem).text().toUpperCase().indexOf(filter) > -1) {
+              return $(resortItem).removeClass('slide-down');
+            } else {
+              return $(resortItem).addClass('slide-down');
+            }
+          });
+        } else {
+          return $('.resort-list-item').removeClass('slide-down');
+        }
+      };
+
+      return ResortSearchBox;
+
+    })(Backbone.View);
     AppView = (function(_super) {
       __extends(AppView, _super);
 
       function AppView() {
-        _ref6 = AppView.__super__.constructor.apply(this, arguments);
-        return _ref6;
+        _ref7 = AppView.__super__.constructor.apply(this, arguments);
+        return _ref7;
       }
 
       AppView.prototype.el = $('#app');
@@ -371,9 +412,13 @@
       };
 
       AppView.prototype.appendAllResorts = function() {
-        var _this = this;
+        var sortedResortList,
+          _this = this;
 
-        return _.each(Resorts.models, function(resort) {
+        sortedResortList = _.sortBy(Resorts.models, function(resort) {
+          return resort.get('formatted_name');
+        });
+        return _.each(sortedResortList, function(resort) {
           return _this.appendResort(resort);
         });
       };
@@ -382,8 +427,13 @@
         return this.resortDataPane = new ResortDataPane();
       };
 
+      AppView.prototype.initResortSearchBox = function() {
+        return this.resortSearchBox = new ResortSearchBox();
+      };
+
       AppView.prototype.render = function() {
         this.appendAllResorts();
+        this.initResortSearchBox();
         return this.renderResortDataPane();
       };
 
