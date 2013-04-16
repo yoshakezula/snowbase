@@ -8,7 +8,7 @@ body{background-image:url("../img/wall4.png");-webkit-user-select:none;-moz-user
 #resort-data .rickshaw_legend .action:hover{text-decoration:none}
 #resort-data .rickshaw_legend .label{font-weight:bold}
 #resort-data .x_label{right:0;opacity:.8;filter:alpha(opacity=80);-ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=80)";padding:5px;margin-right:10px}
-.chart-hover-date{padding:5px 5px 10px;font-size:16px;font-weight:bold}
+.chart-hover-date{padding:5px 5px 10px;font-size:16px;font-weight:bold;color:#aaa}
 .slick-loading-message{text-align:center;text-transform:uppercase;font-size:4.6875em;color:transparent;letter-spacing:.01em;margin-top:60px;font-weight:bold;}
 .slick-loading-message span{text-shadow:0 0 2px rgba(204,208,212,0.9),0 15px 25px rgba(0,0,0,0.3),0 -2px 3px rgba(0,0,0,0.1),0 -5px 10px rgba(255,255,255,0.5),0 5px 10px rgba(0,0,0,0.3),0 3px 4px rgba(255,255,255,0.2),0 0 20px rgba(255,255,255,0.45);-webkit-animation:slick-loading .85s ease-in-out infinite alternate;-moz-animation:slick-loading .85s ease-in-out infinite alternate;-o-animation:slick-loading .85s ease-in-out infinite alternate;-ms-animation:slick-loading .85s ease-in-out infinite alternate;animation:slick-loading .85s ease-in-out infinite alternate;}
 .slick-loading-message span:nth-child(2){-webkit-animation-delay:.15s;-moz-animation-delay:.15s;-o-animation-delay:.15s;-ms-animation-delay:.15s;animation-delay:.15s}

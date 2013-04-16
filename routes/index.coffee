@@ -1,5 +1,4 @@
 request = require 'request'
-_ = require 'underscore'
 
 exports.init = (app) ->
 	app.get '/', (req, res) ->

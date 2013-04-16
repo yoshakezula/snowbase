@@ -4,7 +4,6 @@ http = require 'http'
 stylus = require 'stylus'
 nib = require 'nib'
 routes = require './routes'
-# For coffeescript: https://github.com/adunkman/connect-assets
 app = express()
 
 compile = (str, path) ->

@@ -1,20 +1,24 @@
 {
-    "name": "snowbase",
-    "author": "Kenny Chan",
-    "version": "0.0.1",
-    "main": "server.coffee",
-    "repository" : "git@github.com:yoshakezula/snowbase.git",
-    "engines": {
-        "node": "0.10.x",
-        "npm":  "1.2.x"
-    },
-    "dependencies": {
-        "coffee-script": "*",
-        "express": "*",
-        "jade": "*",
-        "stylus": "*",
-        "underscore": "*",
-        "nib": "*",
-        "request": "*"
-    }
+  "name": "snowbase",
+  "author": "Kenny Chan",
+  "version": "0.1.0",
+  "main": "server.coffee",
+  "repository": "git@github.com:yoshakezula/snowbase.git",
+  "engines": {
+    "node": "0.10.x",
+    "npm": "1.2.x"
+  },
+  "dependencies": {
+    "coffee-script": "1.6.x",
+    "express": "3.1.x",
+    "jade": "0.28.x",
+    "stylus": "0.32.x",
+    "nib": "0.9.x",
+    "request": "2.16.x"
+  },
+  "devDependencies": {
+    "grunt": "~0.4.1",
+    "grunt-contrib-coffee": "~0.6.6",
+    "grunt-contrib-uglify": "~0.2.0"
+  }
 }

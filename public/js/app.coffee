@@ -1,5 +1,5 @@
 $ ->
-	console.log 'main script loaded'
+	# console.log 'main script loaded'
 	class Resort extends Backbone.Model
 		idAttribute: "_id"
 
