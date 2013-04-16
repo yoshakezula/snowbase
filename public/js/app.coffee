@@ -46,7 +46,7 @@ $ ->
 			Backbone.Events.trigger 'resortClicked', @model
 
 		render: () ->
-			@$el.html @model.get 'name'
+			@$el.html @model.get 'formatted_name'
 			@
 
 	class ResortDataPane extends Backbone.View
@@ -238,7 +238,7 @@ $ ->
 			@model = model
 
 			#set the name of the clicked resort
-			@$('#resort-name').html @model.get 'name'
+			@$('#resort-name').html @model.get('formatted_name').toLowerCase()
 
 			#Make sure the chart data is ready
 			if SnowDays.models.length == 0

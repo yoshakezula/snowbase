@@ -114,7 +114,7 @@
       };
 
       ResortView.prototype.render = function() {
-        this.$el.html(this.model.get('name'));
+        this.$el.html(this.model.get('formatted_name'));
         return this;
       };
 
@@ -324,7 +324,7 @@
         var _this = this;
 
         this.model = model;
-        this.$('#resort-name').html(this.model.get('name'));
+        this.$('#resort-name').html(this.model.get('formatted_name').toLowerCase());
         if (SnowDays.models.length === 0) {
           this.listenTo(SnowDays, 'sync', function() {
             _this.populateChartData();
