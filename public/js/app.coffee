@@ -102,7 +102,7 @@ $ ->
 			@$('.rickshaw_graph, .legend, .chart-slider').remove()
 			@$('#resort-data').html('<div class="rickshaw_graph"></div><div class="legend"></div><div class="chart-slider"></div>')
 			chartWidth = ($(window).width() * (.829 - .0256)) - 40
-			chartHeight = 500
+			chartHeight = Math.min(500, $(window).height() - 90)
 			if _.size(@chartData) == 0
 				return
 
@@ -118,7 +118,7 @@ $ ->
 
 			graph.renderer.unstack = true
 			graph.render()
-			@$('rickshaw_graph').addClass 'come-in'
+			@$('.rickshaw_graph').addClass 'come-in'
 
 			legend = new Rickshaw.Graph.Legend
 				graph: graph
@@ -167,7 +167,7 @@ $ ->
 					baseCompString = Math.abs(baseCompPercentage.toFixed(0)) + '% <span class="base-comparison-above-below">' + (if baseCompPercentage < 0 then 'below' else 'above') + '</span> average'
 
 					# Write date on hover label
-					content = '<div class="chart-hover-date">' + dateString + '</div>'
+					content = '<div class="chart-hover-date">' + dateString + ' Base Depth</div>'
 
 					#Write this season's base amount in hover label
 					content += '<div class="this-season-base"><b>' + thisSeason.name + '</b>: ' + thisSeason.value.y.toFixed(0) + ' in.'
@@ -183,27 +183,30 @@ $ ->
 						if season.name == minSeasonName then content += ' <span class="lowest-base-label">LOW</span>'
 						content += '</div>'
 
+					dot = document.createElement 'div'
+					dot.className = 'dot active'
+					dotHeight = graph.y(thisSeason.value.y0 + thisSeason.value.y)
+					dot.style.top = dotHeight + 'px'
+					dot.style.borderColor = thisSeason.series.color
+					@element.appendChild dot
+
 					label = document.createElement 'div'
 					label.className = 'item active'
 					label.innerHTML = content
-					label.style.top = graph.y(thisSeason.value.y0 + thisSeason.value.y) + 'px'
 					@element.appendChild label
-
-
-					dot = document.createElement 'div'
-					dot.className = 'dot active'
-					dot.style.top = label.style.top
-					dot.style.borderColor = thisSeason.series.color
-					@element.appendChild dot
+					label.style.top = dotHeight - Math.max(0, $('.rickshaw_graph').offset().top + dotHeight + $(label).height() - $(window).height()) + 'px'
 
 					# xLabel = document.createElement 'div'
 					# xLabel.className = 'x_label'
 					# xLabel.innerHTML = monthArray[date.getMonth()] + ' ' + date.getDate()
+					# xLabel.style.top = dotHeight + 'px'
 					# @element.appendChild xLabel
 
 					@show()
 
 			hover = new Hover graph: graph
+			$(window).off 'resize.chart'
+			$(window).on 'resize.chart', () => @renderChart()
 		
 		populateChartData: () ->
 			@paletteStep = -1
@@ -238,7 +241,9 @@ $ ->
 			@model = model
 
 			#set the name of the clicked resort
-			@$('#resort-name').html @model.get('formatted_name').toLowerCase()
+			@$('#resort-name').html @model.get('formatted_name') + ' Base Depth'
+
+			@$('#resort-data').html '<div class="slick-loading-message"><span>L</span><span>O</span><span>A</span><span>D</span><span>I</span><span>N</span><span>G</span></div>'
 
 			#Make sure the chart data is ready
 			if SnowDays.models.length == 0

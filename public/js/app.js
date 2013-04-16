@@ -177,12 +177,13 @@
       };
 
       ResortDataPane.prototype.renderChart = function() {
-        var Hover, chartHeight, chartWidth, dateMap, graph, highlighter, hover, legend, monthArray, shelving;
+        var Hover, chartHeight, chartWidth, dateMap, graph, highlighter, hover, legend, monthArray, shelving,
+          _this = this;
 
         this.$('.rickshaw_graph, .legend, .chart-slider').remove();
         this.$('#resort-data').html('<div class="rickshaw_graph"></div><div class="legend"></div><div class="chart-slider"></div>');
         chartWidth = ($(window).width() * (.829 - .0256)) - 40;
-        chartHeight = 500;
+        chartHeight = Math.min(500, $(window).height() - 90);
         if (_.size(this.chartData) === 0) {
           return;
         }
@@ -197,7 +198,7 @@
         });
         graph.renderer.unstack = true;
         graph.render();
-        this.$('rickshaw_graph').addClass('come-in');
+        this.$('.rickshaw_graph').addClass('come-in');
         legend = new Rickshaw.Graph.Legend({
           graph: graph,
           element: this.$('.legend')[0]
@@ -214,7 +215,7 @@
         monthArray = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         Hover = Rickshaw.Class.create(Rickshaw.Graph.HoverDetail, {
           render: function(args) {
-            var baseAvg, baseCompPercentage, baseCompString, content, date, dateString, dot, label, maxBase, maxSeasonName, minBase, minSeasonName, otherSeasons, thisSeason;
+            var baseAvg, baseCompPercentage, baseCompString, content, date, dateString, dot, dotHeight, label, maxBase, maxSeasonName, minBase, minSeasonName, otherSeasons, thisSeason;
 
             thisSeason = _.last(_.sortBy(args.detail, function(series) {
               return series.name;
@@ -246,7 +247,7 @@
             baseAvg = baseAvg / args.detail.length;
             baseCompPercentage = ((thisSeason.value.y / baseAvg) - 1) * 100;
             baseCompString = Math.abs(baseCompPercentage.toFixed(0)) + '% <span class="base-comparison-above-below">' + (baseCompPercentage < 0 ? 'below' : 'above') + '</span> average';
-            content = '<div class="chart-hover-date">' + dateString + '</div>';
+            content = '<div class="chart-hover-date">' + dateString + ' Base Depth</div>';
             content += '<div class="this-season-base"><b>' + thisSeason.name + '</b>: ' + thisSeason.value.y.toFixed(0) + ' in.';
             if (thisSeason.name === maxSeasonName) {
               content += ' <span class="highest-base-label">HIGH</span>';
@@ -266,21 +267,26 @@
               }
               return content += '</div>';
             });
+            dot = document.createElement('div');
+            dot.className = 'dot active';
+            dotHeight = graph.y(thisSeason.value.y0 + thisSeason.value.y);
+            dot.style.top = dotHeight + 'px';
+            dot.style.borderColor = thisSeason.series.color;
+            this.element.appendChild(dot);
             label = document.createElement('div');
             label.className = 'item active';
             label.innerHTML = content;
-            label.style.top = graph.y(thisSeason.value.y0 + thisSeason.value.y) + 'px';
             this.element.appendChild(label);
-            dot = document.createElement('div');
-            dot.className = 'dot active';
-            dot.style.top = label.style.top;
-            dot.style.borderColor = thisSeason.series.color;
-            this.element.appendChild(dot);
+            label.style.top = dotHeight - Math.max(0, $('.rickshaw_graph').offset().top + dotHeight + $(label).height() - $(window).height()) + 'px';
             return this.show();
           }
         });
-        return hover = new Hover({
+        hover = new Hover({
           graph: graph
+        });
+        $(window).off('resize.chart');
+        return $(window).on('resize.chart', function() {
+          return _this.renderChart();
         });
       };
 
@@ -324,7 +330,8 @@
         var _this = this;
 
         this.model = model;
-        this.$('#resort-name').html(this.model.get('formatted_name').toLowerCase());
+        this.$('#resort-name').html(this.model.get('formatted_name') + ' Base Depth');
+        this.$('#resort-data').html('<div class="slick-loading-message"><span>L</span><span>O</span><span>A</span><span>D</span><span>I</span><span>N</span><span>G</span></div>');
         if (SnowDays.models.length === 0) {
           this.listenTo(SnowDays, 'sync', function() {
             _this.populateChartData();
