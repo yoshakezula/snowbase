@@ -12,9 +12,7 @@
         "coffee-script": "*",
         "express": "*",
         "jade": "*",
-        "mongoose": "*",
         "stylus": "*",
-        "mongodb" : "*",
         "underscore": "*",
         "nib": "*",
         "request": "*"

@@ -32,7 +32,6 @@ $ ->
 
 	class ResortCollection extends Backbone.Collection
 		model: Resort
-		# url: 'http://snowbase-api.kennychan.co/resorts'
 		url: '/api/resorts'
 
 	SnowDays = new SnowDayCollection()	
