@@ -343,6 +343,7 @@ $ ->
     resortClickedHandler: (model) ->
       #store the model
       @model = model
+      @stopListening SnowDays, 'sync'
 
       #set the name of the clicked resort
       @$('#resort-name').html @model.get('formatted_name') + ' Base Depth'
@@ -355,7 +356,6 @@ $ ->
           @populateChartData()
           @renderChart()
         return
-      @stopListening SnowDays, 'sync'
 
       @populateChartData()
       @renderChart()

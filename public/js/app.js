@@ -440,6 +440,7 @@
         var _this = this;
 
         this.model = model;
+        this.stopListening(SnowDays, 'sync');
         this.$('#resort-name').html(this.model.get('formatted_name') + ' Base Depth');
         this.$('#resort-data').html(this.loadingMessageHTML);
         if (!SnowDays._resortMap[this.model.get('name')]) {
@@ -449,7 +450,6 @@
           });
           return;
         }
-        this.stopListening(SnowDays, 'sync');
         this.populateChartData();
         return this.renderChart();
       };
