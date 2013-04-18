@@ -1,15 +1,21 @@
 extends layout
 
 block content
-	#resort-list-wrapper.span2
-		#resort-list-search-box-wrapper
-			input#resort-list-search-box(value="", placeholder="search")
-			i.icon-search#resort-list-search-icon
-		#resort-list
-	#resort-data-pane.span10
-		#resort-name &nbsp;
-		#resort-data Please click a ski mountain on the left
+  #resort-list-wrapper.span2
+    #compare-resorts-link Compare All Resorts
+    #resort-list-search-box-wrapper
+      input#resort-list-search-box(value="", placeholder="search")
+      i.icon-search#resort-list-search-icon
+    //- #resort-list-header resorts
+    #resort-list
+  #resort-data-pane.span10
+    #resort-name &nbsp;
+    #state-picker.btn-group(data-toggle="buttons-checkbox", style="display:none;")
+      button.btn.btn-primary(type="button") CA
+      button.btn.btn-primary(type="button") CO
+      button.btn.btn-primary(type="button") UT
+    #resort-data Please click a link on the left to start
 
 
 block bodyscripts
-	//- script(async src="js/app.js")
+  //- script(async src="js/app.js")

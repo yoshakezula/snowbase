@@ -25,16 +25,23 @@ body
   margin-right 5px
 
 #resort-list-wrapper
-  margin-top 50px
+  margin-top 25px
 
 #resort-list-search-box-wrapper
   position relative
-#resort-list
-  margin-top 15px
+
 #resort-list-search-icon
   position absolute
   bottom 5px
   left 2px
+
+#compare-resorts-link, #good-bad-year-link
+  margin 15px 0
+
+#resort-list-header
+  font-size 12px
+  color #aaa
+  border-bottom 1px solid #ccc
 
 #resort-list-search-box
   background-color transparent
@@ -42,7 +49,7 @@ body
   border-left none
   border-right none
   border-bottom 1px dotted #aaa
-  width 98%
+  width 90%
   padding-left 20px
   margin-
   &:focus
@@ -147,6 +154,8 @@ body
 
 .resort-list-item
   margin 5px
+
+.resort-list-item, #compare-resorts-link, #good-bad-year-link
   cursor pointer
   transition all ease-in-out 0.5s
   &.slide-down
