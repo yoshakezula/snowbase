@@ -109,7 +109,8 @@
 
       ResortView.prototype.clickHandler = function() {
         Backbone.Events.trigger('resortClicked', this.model);
-        return this.el.addClass('resort-list-item-selected');
+        $('.resort-list-item-selected').removeClass('resort-list-item-selected');
+        return this.$el.addClass('resort-list-item-selected');
       };
 
       ResortView.prototype.render = function() {

@@ -44,7 +44,8 @@ $ ->
 
 		clickHandler: () ->
 			Backbone.Events.trigger 'resortClicked', @model
-			@el.addClass 'resort-list-item-selected'
+			$('.resort-list-item-selected').removeClass 'resort-list-item-selected'
+			@$el.addClass 'resort-list-item-selected'
 
 		render: () ->
 			@$el.html @model.get 'formatted_name'

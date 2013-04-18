@@ -1,8 +1,9 @@
 html,body{margin:0;padding:0}
 body{background-image:url("../img/wall4.png");-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;font-family:"Open Sans","Helvetica Neue",Helvetica,Arial,sans-serif !important;-webkit-font-smoothing:antialiased}
 #app{padding-top:20px}
-#resort-list-wrapper{margin-top:40px}
+#resort-list-wrapper{margin-top:50px}
 #resort-list-search-box-wrapper{position:relative}
+#resort-list{margin-top:15px}
 #resort-list-search-icon{position:absolute;bottom:5px;left:2px}
 #resort-list-search-box{background-color:transparent;border-top:none;border-left:none;border-right:none;border-bottom:1px dotted #aaa;width:98%;padding-left:20px;}
 #resort-list-search-box margin-,#resort-list-search-box:focus{outline:none;background-color:rgba(0,0,0,0.4);-webkit-transition:background-color .5s;-moz-transition:background-color .5s;-o-transition:background-color .5s;-ms-transition:background-color .5s;transition:background-color .5s;color:#fff}

@@ -1,47 +1,57 @@
 !!! 5
 head
-	meta(charset="utf-8")
-	meta(http-equiv="X-UA-Compatible", content="IE=edge,chrome=1")
+  meta(charset="utf-8")
+  meta(http-equiv="X-UA-Compatible", content="IE=edge,chrome=1")
 
-	title=title
-	meta(name="description", content="Compare This Year's Snow Base Depth to the Past")
-	meta(name="author", content="Kenny Chan")
-	meta(name="viewport", content="width=device-width,initial-scale=1")
+  title=title
+  meta(name="description", content="Compare This Year's Snow Base Depth to the Past")
+  meta(name="author", content="Kenny Chan")
+  meta(name="viewport", content="width=device-width,initial-scale=1")
 
-	link(href="img/favicon.png", rel="icon", type="image/ico")
-	link(rel="stylesheet", href="//fonts.googleapis.com/css?family=Open+Sans:400,700,800")
-	link(rel="stylesheet", href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.1/css/bootstrap-combined.min.css")
-	link(rel="stylesheet", href="stylesheets/app.css")
-	link(rel="stylesheet", href="//cdnjs.cloudflare.com/ajax/libs/rickshaw/1.2.1/rickshaw.min.css")
-		
-	// end CSS
-	block styles
+  link(href="img/favicon.png", rel="icon", type="image/ico")
+  link(rel="stylesheet", href="//fonts.googleapis.com/css?family=Open+Sans:400,700,800")
+  link(rel="stylesheet", href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.1/css/bootstrap-combined.min.css")
+  link(rel="stylesheet", href="stylesheets/app.css")
+  link(rel="stylesheet", href="//cdnjs.cloudflare.com/ajax/libs/rickshaw/1.2.1/rickshaw.min.css")
+    
+  // end CSS
+  block styles
 
-	script(src="js/libs/modernizr.custom.min.js")
+  script
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-39811181-2']);
+    _gaq.push(['_trackPageview']);
 
-	//- script
-	//-	 window._gaq = [['_setAccount','UA-37837175-4'],['_trackPageview'],['_trackPageLoadTime']];
-	//-	 Modernizr.load({load: ('https:' == location.protocol ? '//ssl' : '//www') + '.google-analytics.com/ga.js'});
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+
 body
-	.container-fluid
-		#app.row-fluid
-			block content
+  .container-fluid
+    #app.row-fluid
+      block content
 
-	
-	script(src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js")
-	script(async src="//ajax.googleapis.com/ajax/libs/jqueryui/1.8.15/jquery-ui.min.js")
-	script(src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.4.4/underscore-min.js")
-	script(src="//cdnjs.cloudflare.com/ajax/libs/backbone.js/1.0.0/backbone-min.js")
-	script(async src="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.1/js/bootstrap.min.js")
-	script(src="//cdnjs.cloudflare.com/ajax/libs/d3/3.0.8/d3.min.js")
-	script(async src="//cdnjs.cloudflare.com/ajax/libs/rickshaw/1.2.1/rickshaw.min.js")
-	//- script(async src="js/libs/rickshaw.js")
-		
-	script
-		window.jQuery || document.write('<script src="js/libs/jquery-1.9.1.min.js"><\\/script>')
-		window.Backbone || document.write('<script src="js/libs/backbone-min.js"><\\/script>')
-		window._ || document.write('<script src="js/libs/underscore-min.js"><\\/script>')
-		//- window.d3 || document.write('<script src="js/libs/d3.min.js"><\\/script>')
-		//- window.Rickshaw || document.write('<script src="js/libs/rickshaw.min.js"><\\/script>')
+  
+  script(src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js")
+  script(async src="//ajax.googleapis.com/ajax/libs/jqueryui/1.8.15/jquery-ui.min.js")
 
-	block bodyscripts
+
+  //- Comment out for local hosting
+  script(src="js/libs/require.min.js")
+  script(src="dist/main-built.js")
+
+  //- Uncommenent for local hosting
+  //- script(src="js/libs/underscore-min.js")
+  //- script(src="js/libs/backbone-min.js")
+  //- script(src="js/libs/modernizr.custom.min.js")
+  //- script(async src="js/libs/bootstrap.js")
+  //- script(src="js/libs/d3.min.js")
+  //- script(async src="js/libs/rickshaw.js")
+  //- script(src="js/app.js")
+    
+  script
+    window.jQuery || document.write('<script src="js/libs/jquery/jquery-1.9.1.min.js"><\\/script>')
+
+  block bodyscripts
