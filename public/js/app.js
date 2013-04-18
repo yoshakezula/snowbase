@@ -108,9 +108,16 @@
       };
 
       ResortView.prototype.clickHandler = function() {
-        Backbone.Events.trigger('resortClicked', this.model);
+        if (!SnowDays._resortMap[this.model.get('name')]) {
+          SnowDays.fetch({
+            data: {
+              resort_id: this.model.id
+            }
+          });
+        }
         $('.resort-list-item-selected').removeClass('resort-list-item-selected');
-        return this.$el.addClass('resort-list-item-selected');
+        this.$el.addClass('resort-list-item-selected');
+        return Backbone.Events.trigger('resortClicked', this.model);
       };
 
       ResortView.prototype.render = function() {
@@ -375,7 +382,7 @@
         this.model = model;
         this.$('#resort-name').html(this.model.get('formatted_name') + ' Base Depth');
         this.$('#resort-data').html('<div class="slick-loading-message"><span>L</span><span>O</span><span>A</span><span>D</span><span>I</span><span>N</span><span>G</span></div>');
-        if (SnowDays.models.length === 0) {
+        if (!SnowDays._resortMap[this.model.get('name')]) {
           this.listenTo(SnowDays, 'sync', function() {
             _this.populateChartData();
             return _this.renderChart();
@@ -443,7 +450,9 @@
       AppView.prototype.initialize = function() {
         Resorts.bind('sync', this.render, this);
         Resorts.fetch();
-        return SnowDays.fetch();
+        return setTimeout((function() {
+          return SnowDays.fetch();
+        }), 3000);
       };
 
       AppView.prototype.appendResort = function(resort) {

@@ -43,9 +43,11 @@ $ ->
       'click' : 'clickHandler'
 
     clickHandler: () ->
-      Backbone.Events.trigger 'resortClicked', @model
+      if !SnowDays._resortMap[@model.get 'name']
+        SnowDays.fetch data: resort_id: @model.id
       $('.resort-list-item-selected').removeClass 'resort-list-item-selected'
       @$el.addClass 'resort-list-item-selected'
+      Backbone.Events.trigger 'resortClicked', @model
 
     render: () ->
       @$el.html @model.get 'formatted_name'
@@ -299,7 +301,7 @@ $ ->
       @$('#resort-data').html '<div class="slick-loading-message"><span>L</span><span>O</span><span>A</span><span>D</span><span>I</span><span>N</span><span>G</span></div>'
 
       #Make sure the chart data is ready
-      if SnowDays.models.length == 0
+      if !SnowDays._resortMap[@model.get 'name']
         @listenTo SnowDays, 'sync', () => 
           @populateChartData()
           @renderChart()
@@ -333,7 +335,8 @@ $ ->
     initialize: () ->
       Resorts.bind 'sync', @render, this
       Resorts.fetch()
-      SnowDays.fetch()
+      #Delay fetching all snowdays
+      setTimeout (() -> SnowDays.fetch()), 3000
 
     appendResort: (resort) ->
       resortView = new ResortView
