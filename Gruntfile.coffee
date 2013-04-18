@@ -13,7 +13,14 @@ module.exports = (grunt) ->
       compile:
         files:
           'public/js/app.js': 'public/coffee/app.coffee'
+    stylus:
+      compile:
+        options:
+          "include css": true
+        files:
+          'public/stylesheets/app.css' : 'public/stylesheets/app.styl'
   grunt.loadNpmTasks 'grunt-contrib-coffee'
   grunt.loadNpmTasks 'grunt-contrib-requirejs'
+  grunt.loadNpmTasks 'grunt-contrib-stylus'
 
-  grunt.registerTask 'default', ['coffee', 'requirejs']
+  grunt.registerTask 'default', ['coffee', 'requirejs', 'stylus']

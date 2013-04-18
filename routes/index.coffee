@@ -2,7 +2,7 @@ request = require 'request'
 
 exports.init = (app) ->
 	app.get '/', (req, res) ->
-		res.render 'index', title: "SnowBase - Compare This Year's Snow Base Depth to the Past"
+		res.render 'index', title: "Compare This Year's Snow Base Depth to the Past"
 
 	app.get '/api/resorts', (req, res) ->
 		request {url: 'http://snowbase-api.kennychan.co/api/resorts', json: true}, (error, response, body) ->

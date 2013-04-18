@@ -34,5 +34,5 @@ var require = {
   },
 
   preserveLicenseComments: false,
-  waitSeconds: 15
+  // waitSeconds: 15
 }

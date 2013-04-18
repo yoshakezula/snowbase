@@ -12,9 +12,6 @@ compile = (str, path) ->
 app.configure () ->
   app.set 'views', __dirname + '/views'
   app.set 'view engine', 'jade'
-  app.use stylus.middleware
-    src: __dirname + '/public'
-    compile: compile
   app.use express.favicon()
   app.use express.logger('dev')
   app.use express.static(__dirname + '/public')
@@ -24,6 +21,9 @@ app.configure () ->
 
 app.configure 'development', () ->
   app.use express.errorHandler()
+  app.use stylus.middleware
+    src: __dirname + '/public'
+    compile: compile
 
 routes.init app
 

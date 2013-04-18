@@ -1,7 +1,7 @@
 {
   "name": "snowbase",
   "author": "Kenny Chan",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "main": "server.coffee",
   "repository": "git@github.com:yoshakezula/snowbase.git",
   "engines": {
@@ -19,6 +19,7 @@
   "devDependencies": {
     "grunt": "~0.4.1",
     "grunt-contrib-coffee": "~0.6.6",
-    "grunt-contrib-requirejs": "~0.4.0"
+    "grunt-contrib-requirejs": "~0.4.0",
+    "grunt-contrib-stylus": "~0.5.0"
   }
 }

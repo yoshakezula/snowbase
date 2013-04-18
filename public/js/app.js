@@ -132,16 +132,38 @@
       ResortDataPane.prototype.el = $('#resort-data-pane');
 
       ResortDataPane.prototype.initialize = function() {
-        var _this = this;
-
         this.chartData = [];
         this.listenTo(Backbone.Events, 'resortClicked', this.clickHandler);
         this.paletteStep = -1;
         this.rgba = $('html').hasClass('rgba');
-        this.paletteHEX = ['#39cc67', '#70A5FF', '#85B1FF', '#99BEFF', '#ADCBFF', '#C2D8FF', '#D6E5FF', '#EBF2FF'];
+        this.basePalette = ['#D92929', '#F2911B', '#F2CB05', '#016483', '#6ECAC7'];
+        return this.buildColorArrays();
+      };
+
+      ResortDataPane.prototype.buildColorArrays = function() {
+        var _this = this;
+
+        this.paletteHEX = [];
+        _.each(this.basePalette, function(color) {
+          return _this.paletteHEX.push(_this.shadeColor(color, 20));
+        });
+        _.each(this.basePalette, function(color) {
+          return _this.paletteHEX.push(_this.shadeColor(color, 50));
+        });
         return this.paletteRGBA = _.map(this.paletteHEX, function(color) {
           return _this.colorToRGBA(color).rgba;
         });
+      };
+
+      ResortDataPane.prototype.shadeColor = function(color, percent) {
+        var B, G, R, amt, num;
+
+        num = parseInt(color.slice(1), 16);
+        amt = Math.round(2.55 * percent);
+        R = (num >> 16) + amt;
+        B = (num >> 8 & 0x00FF) + amt;
+        G = (num & 0x0000FF) + amt;
+        return '#' + (0x1000000 + (R < 255 ? (R < 1 ? 1 : R) : 255) * 0x10000 + (B < 255 ? (B < 1 ? 0 : B) : 255) * 0x100 + (G < 255 ? (G < 1 ? 0 : G) : 255)).toString(16).slice(1);
       };
 
       ResortDataPane.prototype.colorToRGBA = function(r, g, b) {
@@ -199,20 +221,6 @@
         graph.renderer.unstack = true;
         graph.render();
         this.$('.rickshaw_graph').addClass('come-in');
-        legend = new Rickshaw.Graph.Legend({
-          graph: graph,
-          element: this.$('.legend')[0]
-        });
-        shelving = new Rickshaw.Graph.Behavior.Series.Toggle({
-          graph: graph,
-          legend: legend
-        });
-        highlighter = new Rickshaw.Graph.Behavior.Series.Highlight({
-          graph: graph,
-          legend: legend
-        });
-        dateMap = this.dateMap;
-        monthArray = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         Hover = Rickshaw.Class.create(Rickshaw.Graph.HoverDetail, {
           render: function(args) {
             var baseAvg, baseCompPercentage, baseCompString, content, date, dateString, dot, dotHeight, label, maxBase, maxSeasonName, minBase, minSeasonName, otherSeasons, thisSeason;
@@ -248,7 +256,9 @@
             baseCompPercentage = ((thisSeason.value.y / baseAvg) - 1) * 100;
             baseCompString = Math.abs(baseCompPercentage.toFixed(0)) + '% <span class="base-comparison-above-below">' + (baseCompPercentage < 0 ? 'below' : 'above') + '</span> average';
             content = '<div class="chart-hover-date">' + dateString + ' Base Depth</div>';
-            content += '<div class="this-season-base"><b>' + thisSeason.name + '</b>: ' + thisSeason.value.y.toFixed(0) + ' in.';
+            content += '<div class="this-season-base">';
+            content += '<span class="detail-swatch" style="background-color:' + thisSeason.series.color + '"></span>';
+            content += '<b>' + thisSeason.name + '</b>: ' + thisSeason.value.y.toFixed(0) + ' in.';
             if (thisSeason.name === maxSeasonName) {
               content += ' <span class="highest-base-label">HIGH</span>';
             }
@@ -258,7 +268,9 @@
             content += '</div>';
             content += '<div class="this-season-base-comparison-stats">' + baseCompString + '</div>';
             _.each(otherSeasons, function(season) {
-              content += '<div class="past-season-base"><b>' + season.name + '</b>: ' + season.value.y.toFixed(0) + ' in.';
+              content += '<div class="past-season-base">';
+              content += '<span class="detail-swatch" style="background-color:' + season.series.color + '"></span>';
+              content += '<b>' + season.name + '</b>: ' + season.value.y.toFixed(0) + ' in.';
               if (season.name === maxSeasonName) {
                 content += ' <span class="highest-base-label">HIGH</span>';
               }
@@ -284,6 +296,20 @@
         hover = new Hover({
           graph: graph
         });
+        legend = new Rickshaw.Graph.Legend({
+          graph: graph,
+          element: this.$('.legend')[0]
+        });
+        shelving = new Rickshaw.Graph.Behavior.Series.Toggle({
+          graph: graph,
+          legend: legend
+        });
+        highlighter = new Rickshaw.Graph.Behavior.Series.Highlight({
+          graph: graph,
+          legend: legend
+        });
+        dateMap = this.dateMap;
+        monthArray = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         $(window).off('resize.chart');
         return $(window).on('resize.chart', function() {
           return _this.renderChart();
@@ -297,6 +323,7 @@
         this.paletteStep = -1;
         this.chartData = [];
         this.dateMap = {};
+        this.averageBaseMap = {};
         seasonNames = (_.keys(SnowDays._resortMap[this.model.get('name')])).sort().reverse();
         colorMap = {};
         _.each(seasonNames, function(seasonName) {
@@ -304,16 +331,27 @@
         });
         this.thisSeasonName = _.first(seasonNames);
         _.each(SnowDays._resortMap[this.model.get('name')], function(snowDays, seasonName) {
-          var seasonData;
+          var seasonData, seasonNonZeroDays, seasonSum;
 
           seasonData = [];
+          seasonSum = 0;
+          seasonNonZeroDays = 0;
           _.each(snowDays, function(snowDay) {
+            var base;
+
+            base = snowDay.get('base');
             seasonData.push({
               x: snowDay.get('season_day'),
-              y: snowDay.get('base')
+              y: base
             });
+            if (base > 0) {
+              seasonSum += base;
+              seasonNonZeroDays += 1;
+            }
+            seasonSum += snowDay.get('base');
             return _this.dateMap[snowDay.get('season_day')] = snowDay.get('date');
           });
+          _this.averageBaseMap[seasonName] = parseInt(seasonSum / seasonNonZeroDays);
           return _this.chartData.push({
             name: seasonName,
             data: seasonData,
@@ -321,9 +359,14 @@
             stroke: seasonName === _this.thisSeasonName ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.25)'
           });
         });
-        return this.chartData = _.sortBy(this.chartData, function(series) {
-          return series.name;
+        this.chartData = _.sortBy(this.chartData, function(series) {
+          if (series.name === _this.thisSeasonName) {
+            return 0;
+          } else {
+            return _this.averageBaseMap[series.name];
+          }
         });
+        return this.chartData = this.chartData.reverse();
       };
 
       ResortDataPane.prototype.clickHandler = function(model) {
