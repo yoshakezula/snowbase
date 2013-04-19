@@ -42,10 +42,13 @@ $ ->
     initialize: ->
       @on 'sync', @populateResortMaps
       @_resortNameMap = {}
+      @_resortStateMap = {}
 
     populateResortMaps: () ->
       _.each @models, (model) =>
         @_resortNameMap[model.get 'formatted_name'] = model
+        @_resortStateMap[model.get 'state'] = {} if !@_resortStateMap[model.get 'state']
+        @_resortStateMap[model.get 'state'][model.get 'name'] = model
 
   # SnowDays = new SnowDayCollection()  
   Resorts = new ResortCollection()
@@ -76,14 +79,21 @@ $ ->
 
   class ResortDataPane extends Backbone.View
     el: $ '#resort-data-pane'
+
+    events:
+      'click #state-picker button' : 'filterStates'
+
     initialize: ()->
       @chartData = []
+      @selectedStates = _.map @$('#state-picker button.active'), (button) -> button.getAttribute('data-state')
       @listenTo Backbone.Events, 'resortClicked', @resortClickedHandler
       @listenTo Backbone.Events, 'compareResortsClicked', @compareResorts
+      
+      #Wait to populate data map if data not ready
       if _.size(DataMap) > 0
-        @populateDataMap
+        @populateDateMap
       else
-        @listenTo Backbone.Events, 'dataMapReturned', @populateDataMap
+        @listenTo Backbone.Events, 'dataMapReturned', @populateDateMap
       @paletteStep = -1
       @dateMap = {}
       @rgba = $('html').hasClass 'rgba'
@@ -93,15 +103,23 @@ $ ->
         '#016483'
         '#F2CB05'
         '#6ECAC7'
-        # '#BF4B31'
-        # '#FCC240'
-        # '#BF4B31'
-        # '#4D8B4D'
-        # '#4B3929'
       ]
       @loadingMessageHTML = '<div class="slick-loading-message"><span>L</span><span>O</span><span>A</span><span>D</span><span>I</span><span>N</span><span>G</span></div>'
       @buildColorArrays()
-    populateDataMap: () ->
+
+    filterStates: (e) ->
+      @selectedStates = _.map @$('#state-picker button.active'), (button) -> button.getAttribute('data-state')
+      clickedState = e.target.getAttribute('data-state')
+      if @selectedStates.indexOf(clickedState) > -1
+        #we're deselecting a state
+        @selectedStates.splice(@selectedStates.indexOf(clickedState), 1)
+      else
+        @selectedStates.push clickedState
+
+      @populateChartData()
+      @renderChart()
+
+    populateDateMap: () ->
       #Push to the date map, so we can match up the "season day" with a date
       seasonToWorkWith = _.find DataMap[Resorts.models[0].get('name')], (seasonData, seasonName) -> seasonName != 'Average'
       _.each seasonToWorkWith, (snowDayData, seasonDay) =>
@@ -121,16 +139,6 @@ $ ->
         @paletteHEX.push @shadeColor(color, 35)
       _.each @basePalette, (color) =>
         @paletteHEX.push @shadeColor(color, 60)
-      # @paletteHEX = [
-      #   '#39cc67' #aqua
-      #   '#70A5FF'
-      #   '#85B1FF'
-      #   '#99BEFF'
-      #   '#ADCBFF'
-      #   '#C2D8FF'
-      #   '#D6E5FF'
-      #   '#EBF2FF'
-      # ]
       @paletteRGBA = _.map @paletteHEX, (color) => @colorToRGBA(color).rgba
 
     shadeColor: (color, percent) ->
@@ -175,7 +183,8 @@ $ ->
       chartHeight = Math.min(500, $(window).height() - 90)
       firstSeasonName = @firstSeasonName
       individualResortMode = @individualResortMode
-      if _.size(@chartData) == 0
+      numSeries = _.size(@chartData) 
+      if numSeries == 0
         return
 
       graph = new Rickshaw.Graph
@@ -188,27 +197,44 @@ $ ->
         interpolation: 'basis'
         # min: 'auto'
 
+      @$('.rickshaw_graph').addClass 'animate-graph'
+      #add class to initialize the graph animation
+
       graph.renderer.unstack = true
       graph.render()
-      @$('.rickshaw_graph').addClass 'come-in'
+
+      #Wait for all animations to complete and then rm the animate-graph class so we don't keep animating it when hovering over the legend
+      animationCounter = 0
+      $('svg g').on 'webkitAnimationEnd', () =>
+        animationCounter += 1 
+        if animationCounter == numSeries
+          setTimeout (() => @$('.rickshaw_graph').removeClass 'animate-graph'), 300
+
+      dateMap = @dateMap
+      monthArray = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+      dateRenderer = (date) ->
+        monthArray[date.getMonth()] + ' ' + date.getDate()
+
 
       Hover = Rickshaw.Class.create Rickshaw.Graph.HoverDetail, 
         render: (args) ->
+          #if numseries > args.detail.length then we're filtering by hovering on the legend
+          showCurrentSeasonDetailHover = if numSeries == args.detail.length then individualResortMode else false
+          
           #Get name of this season (the most current one)
-          thisSeason = (_.find args.detail, (series) -> series.name == firstSeasonName) || {name: 'franz'}
+          thisSeason = (_.find args.detail, (series) -> series.name == firstSeasonName) || args.detail[0]
 
           #Get array of other season names
-          if individualResortMode
+          if showCurrentSeasonDetailHover
             otherSeasons = _.sortBy (_.filter args.detail, (series) -> series.name != thisSeason.name), (series) -> series.name
           else
             otherSeasons = _.sortBy args.detail, (series) -> series.value.y
           otherSeasons = otherSeasons.reverse()
 
           # set date string to use in hover detail
-          date = new Date(dateMap[otherSeasons[0].value.x])
-          dateString = monthArray[date.getMonth()] + ' ' + date.getDate()
+          dateString = dateRenderer(dateMap[otherSeasons[0].value.x])
 
-          if individualResortMode
+          if showCurrentSeasonDetailHover
             # get comparison stats if we're in an individual resort mode
             maxBase = 0
             minBase = 9999
@@ -231,7 +257,7 @@ $ ->
           # Write date on hover label
           content = '<div class="chart-hover-date">' + dateString + ' Base Depth</div>'
 
-          if individualResortMode
+          if showCurrentSeasonDetailHover
             #Write this season's base amount in hover label
             content += '<div class="this-season-base">'
             content += '<span class="detail-swatch" style="background-color:' + thisSeason.series.color + '"></span>'
@@ -248,13 +274,13 @@ $ ->
               content += '<span class="detail-swatch" style="background-color:' + season.series.color + '"></span>'
             content += '<b>' + season.name + '</b>: ' + season.value.y.toFixed(0) + ' in.'
 
-            if individualResortMode
+            if showCurrentSeasonDetailHover
               if season.name == maxSeasonName then content += ' <span class="highest-base-label">HIGH</span>'
               if season.name == minSeasonName then content += ' <span class="lowest-base-label">LOW</span>'
             
             content += '</div>'
 
-          dotDataSet = if individualResortMode then [thisSeason] else args.detail
+          dotDataSet = if showCurrentSeasonDetailHover then [thisSeason] else args.detail
 
           minDotHeight = 1000
 
@@ -273,12 +299,6 @@ $ ->
           @element.appendChild label
           label.style.top = minDotHeight - Math.max(0, $('.rickshaw_graph').offset().top + minDotHeight + $(label).height() - $(window).height()) + 'px'
 
-          # xLabel = document.createElement 'div'
-          # xLabel.className = 'x_label'
-          # xLabel.innerHTML = monthArray[date.getMonth()] + ' ' + date.getDate()
-          # xLabel.style.top = dotHeight + 'px'
-          # @element.appendChild xLabel
-
           @show()
 
       hover = new Hover graph: graph
@@ -295,8 +315,11 @@ $ ->
         graph: graph
         legend: legend
 
-      dateMap = @dateMap
-      monthArray = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+      xAxis = new Rickshaw.Graph.Axis.X
+        graph: graph
+        tickFormat: (x) -> dateRenderer(dateMap[x])
+      xAxis.render()
+
       $(window).off 'resize.chart'
       $(window).on 'resize.chart', () => @renderChart()
     
@@ -306,11 +329,16 @@ $ ->
       @averageBaseMap = {}
       @individualResortMode = @model != undefined
 
+      #populate list of selected resorts given selected states
+      selectedResorts = []
+      _.each @selectedStates, (stateName) ->
+        selectedResorts = selectedResorts.concat _.keys Resorts._resortStateMap[stateName]
+
       seriesNames = if @individualResortMode then (_.keys DataMap[@model.get('name')]).sort().reverse() else _.keys Resorts._resortNameMap
 
       @firstSeasonName = _.first(_.without(seriesNames, 'Average'))
 
-      dataSet = if @individualResortMode then DataMap[@model.get('name')] else DataMap
+      dataSet = if @individualResortMode then DataMap[@model.get('name')] else _.pick(DataMap, selectedResorts)
 
       _.each dataSet, (snowDays, seriesName) =>
 
@@ -359,6 +387,7 @@ $ ->
       $('#compare-resorts-link').addClass 'resort-list-item-selected'
       @$('#resort-data').html @loadingMessageHTML
       @$('#resort-name').html 'Comparative Base Depth'
+      @$('#state-picker').show()
       @model = undefined
       @stopListening Backbone.Events, 'dataMapReturned'
 
@@ -367,34 +396,19 @@ $ ->
           @populateChartData
           @renderChart
 
-      #Make sure the chart data is ready
-      # if _.size(SnowDays._resortMap) == 0
-      #   @listenTo SnowDays, 'sync', () => 
-      #     @populateChartData()
-      #     @renderChart()
-      #   return
-      # @stopListening SnowDays, 'sync'
-
       @populateChartData()
       @renderChart()
 
     resortClickedHandler: (model) ->
       #store the model
       @model = model
-      # @stopListening SnowDays, 'sync'
       @stopListening Backbone.Events, 'dataMapReturned'
 
       #set the name of the clicked resort
       @$('#resort-name').html @model.get('formatted_name') + ' Base Depth'
-
       @$('#resort-data').html @loadingMessageHTML
+      @$('#state-picker').hide()
 
-      #Make sure the chart data is ready
-      # if !SnowDays._resortMap[@model.get 'name']
-      #   @listenTo SnowDays, 'sync', () =>
-      #     @populateChartData()
-      #     @renderChart()
-      #   return
       if _.size(DataMap) == 0
         @listenTo Backbone.Events, 'dataMapReturned', () =>
           @populateChartData
@@ -430,6 +444,12 @@ $ ->
     initialize: () ->
       Resorts.bind 'sync', @render, this
       Resorts.fetch()
+      @stateMap = 
+        'california' : 'CA'
+        'colorado' : 'CO'
+        'vermont' : 'VT'
+        'utah' : 'UT'
+        'wyoming' : 'WY'
       #Get snowday map
       $.ajax
         url: 'api/snow-days-map'
@@ -449,10 +469,21 @@ $ ->
       @$('#resort-list').append resortView.render().el
 
     appendAllResorts: () ->
-      sortedResortList = _.sortBy Resorts.models, (resort) ->
-        resort.get 'formatted_name'
-      _.each sortedResortList, (resort) =>
-        @appendResort resort
+      sortedStateList = _.sortBy Resorts._resortStateMap, (v, k) -> k
+      stateNames = _.keys(Resorts._resortStateMap).sort()
+      _.each sortedStateList, (resorts, index) =>
+
+        stateName = stateNames[index]
+
+        #append state header to resort list
+        @$('#resort-list').append '<div class="resort-list-state-header">' + stateName + '</div>'
+
+        #append button to state picker
+        $('#state-picker').append '<button data-state="' + stateName + '" class="btn btn-primary active">' + @stateMap[stateName] + '</button>'
+
+        sortedResortList = _.sortBy resorts, (v, k) -> k
+        _.each sortedResortList, (resort) =>
+          @appendResort resort
 
     renderResortDataPane: () ->
       @resortDataPane = new ResortDataPane()

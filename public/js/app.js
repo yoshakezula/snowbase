@@ -94,14 +94,19 @@
 
       ResortCollection.prototype.initialize = function() {
         this.on('sync', this.populateResortMaps);
-        return this._resortNameMap = {};
+        this._resortNameMap = {};
+        return this._resortStateMap = {};
       };
 
       ResortCollection.prototype.populateResortMaps = function() {
         var _this = this;
 
         return _.each(this.models, function(model) {
-          return _this._resortNameMap[model.get('formatted_name')] = model;
+          _this._resortNameMap[model.get('formatted_name')] = model;
+          if (!_this._resortStateMap[model.get('state')]) {
+            _this._resortStateMap[model.get('state')] = {};
+          }
+          return _this._resortStateMap[model.get('state')][model.get('name')] = model;
         });
       };
 
@@ -152,14 +157,21 @@
 
       ResortDataPane.prototype.el = $('#resort-data-pane');
 
+      ResortDataPane.prototype.events = {
+        'click #state-picker button': 'filterStates'
+      };
+
       ResortDataPane.prototype.initialize = function() {
         this.chartData = [];
+        this.selectedStates = _.map(this.$('#state-picker button.active'), function(button) {
+          return button.getAttribute('data-state');
+        });
         this.listenTo(Backbone.Events, 'resortClicked', this.resortClickedHandler);
         this.listenTo(Backbone.Events, 'compareResortsClicked', this.compareResorts);
         if (_.size(DataMap) > 0) {
-          this.populateDataMap;
+          this.populateDateMap;
         } else {
-          this.listenTo(Backbone.Events, 'dataMapReturned', this.populateDataMap);
+          this.listenTo(Backbone.Events, 'dataMapReturned', this.populateDateMap);
         }
         this.paletteStep = -1;
         this.dateMap = {};
@@ -169,7 +181,23 @@
         return this.buildColorArrays();
       };
 
-      ResortDataPane.prototype.populateDataMap = function() {
+      ResortDataPane.prototype.filterStates = function(e) {
+        var clickedState;
+
+        this.selectedStates = _.map(this.$('#state-picker button.active'), function(button) {
+          return button.getAttribute('data-state');
+        });
+        clickedState = e.target.getAttribute('data-state');
+        if (this.selectedStates.indexOf(clickedState) > -1) {
+          this.selectedStates.splice(this.selectedStates.indexOf(clickedState), 1);
+        } else {
+          this.selectedStates.push(clickedState);
+        }
+        this.populateChartData();
+        return this.renderChart();
+      };
+
+      ResortDataPane.prototype.populateDateMap = function() {
         var seasonToWorkWith,
           _this = this;
 
@@ -253,7 +281,7 @@
       };
 
       ResortDataPane.prototype.renderChart = function() {
-        var Hover, chartHeight, chartWidth, dateMap, firstSeasonName, graph, highlighter, hover, individualResortMode, legend, monthArray, shelving,
+        var Hover, animationCounter, chartHeight, chartWidth, dateMap, dateRenderer, firstSeasonName, graph, highlighter, hover, individualResortMode, legend, monthArray, numSeries, shelving, xAxis,
           _this = this;
 
         this.$('.rickshaw_graph, .legend, .chart-slider').remove();
@@ -262,7 +290,8 @@
         chartHeight = Math.min(500, $(window).height() - 90);
         firstSeasonName = this.firstSeasonName;
         individualResortMode = this.individualResortMode;
-        if (_.size(this.chartData) === 0) {
+        numSeries = _.size(this.chartData);
+        if (numSeries === 0) {
           return;
         }
         graph = new Rickshaw.Graph({
@@ -274,20 +303,33 @@
           series: this.chartData,
           interpolation: 'basis'
         });
+        this.$('.rickshaw_graph').addClass('animate-graph');
         graph.renderer.unstack = true;
         graph.render();
-        this.$('.rickshaw_graph').addClass('come-in');
+        animationCounter = 0;
+        $('svg g').on('webkitAnimationEnd', function() {
+          animationCounter += 1;
+          if (animationCounter === numSeries) {
+            return setTimeout((function() {
+              return _this.$('.rickshaw_graph').removeClass('animate-graph');
+            }), 300);
+          }
+        });
+        dateMap = this.dateMap;
+        monthArray = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        dateRenderer = function(date) {
+          return monthArray[date.getMonth()] + ' ' + date.getDate();
+        };
         Hover = Rickshaw.Class.create(Rickshaw.Graph.HoverDetail, {
           render: function(args) {
-            var baseAvg, baseCompPercentage, baseCompString, content, date, dateString, dotDataSet, label, maxBase, maxSeasonName, minBase, minDotHeight, minSeasonName, otherSeasons, thisSeason,
+            var baseAvg, baseCompPercentage, baseCompString, content, dateString, dotDataSet, label, maxBase, maxSeasonName, minBase, minDotHeight, minSeasonName, otherSeasons, showCurrentSeasonDetailHover, thisSeason,
               _this = this;
 
+            showCurrentSeasonDetailHover = numSeries === args.detail.length ? individualResortMode : false;
             thisSeason = (_.find(args.detail, function(series) {
               return series.name === firstSeasonName;
-            })) || {
-              name: 'franz'
-            };
-            if (individualResortMode) {
+            })) || args.detail[0];
+            if (showCurrentSeasonDetailHover) {
               otherSeasons = _.sortBy(_.filter(args.detail, function(series) {
                 return series.name !== thisSeason.name;
               }), function(series) {
@@ -299,9 +341,8 @@
               });
             }
             otherSeasons = otherSeasons.reverse();
-            date = new Date(dateMap[otherSeasons[0].value.x]);
-            dateString = monthArray[date.getMonth()] + ' ' + date.getDate();
-            if (individualResortMode) {
+            dateString = dateRenderer(dateMap[otherSeasons[0].value.x]);
+            if (showCurrentSeasonDetailHover) {
               maxBase = 0;
               minBase = 9999;
               maxSeasonName = '';
@@ -323,7 +364,7 @@
               baseCompString = Math.abs(baseCompPercentage.toFixed(0)) + '% <span class="base-comparison-above-below">' + (baseCompPercentage < 0 ? 'below' : 'above') + '</span> average';
             }
             content = '<div class="chart-hover-date">' + dateString + ' Base Depth</div>';
-            if (individualResortMode) {
+            if (showCurrentSeasonDetailHover) {
               content += '<div class="this-season-base">';
               content += '<span class="detail-swatch" style="background-color:' + thisSeason.series.color + '"></span>';
               content += '<b>' + thisSeason.name + '</b>: ' + thisSeason.value.y.toFixed(0) + ' in.';
@@ -342,7 +383,7 @@
                 content += '<span class="detail-swatch" style="background-color:' + season.series.color + '"></span>';
               }
               content += '<b>' + season.name + '</b>: ' + season.value.y.toFixed(0) + ' in.';
-              if (individualResortMode) {
+              if (showCurrentSeasonDetailHover) {
                 if (season.name === maxSeasonName) {
                   content += ' <span class="highest-base-label">HIGH</span>';
                 }
@@ -352,7 +393,7 @@
               }
               return content += '</div>';
             });
-            dotDataSet = individualResortMode ? [thisSeason] : args.detail;
+            dotDataSet = showCurrentSeasonDetailHover ? [thisSeason] : args.detail;
             minDotHeight = 1000;
             _.each(dotDataSet, function(data) {
               var dot, dotHeight;
@@ -388,8 +429,13 @@
           graph: graph,
           legend: legend
         });
-        dateMap = this.dateMap;
-        monthArray = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        xAxis = new Rickshaw.Graph.Axis.X({
+          graph: graph,
+          tickFormat: function(x) {
+            return dateRenderer(dateMap[x]);
+          }
+        });
+        xAxis.render();
         $(window).off('resize.chart');
         return $(window).on('resize.chart', function() {
           return _this.renderChart();
@@ -397,16 +443,20 @@
       };
 
       ResortDataPane.prototype.populateChartData = function() {
-        var dataSet, seriesNames,
+        var dataSet, selectedResorts, seriesNames,
           _this = this;
 
         this.paletteStep = -1;
         this.chartData = [];
         this.averageBaseMap = {};
         this.individualResortMode = this.model !== void 0;
+        selectedResorts = [];
+        _.each(this.selectedStates, function(stateName) {
+          return selectedResorts = selectedResorts.concat(_.keys(Resorts._resortStateMap[stateName]));
+        });
         seriesNames = this.individualResortMode ? (_.keys(DataMap[this.model.get('name')])).sort().reverse() : _.keys(Resorts._resortNameMap);
         this.firstSeasonName = _.first(_.without(seriesNames, 'Average'));
-        dataSet = this.individualResortMode ? DataMap[this.model.get('name')] : DataMap;
+        dataSet = this.individualResortMode ? DataMap[this.model.get('name')] : _.pick(DataMap, selectedResorts);
         _.each(dataSet, function(snowDays, seriesName) {
           var seriesData, seriesNameToShow, seriesNonZeroDays, seriesSum, subDataSet;
 
@@ -461,6 +511,7 @@
         $('#compare-resorts-link').addClass('resort-list-item-selected');
         this.$('#resort-data').html(this.loadingMessageHTML);
         this.$('#resort-name').html('Comparative Base Depth');
+        this.$('#state-picker').show();
         this.model = void 0;
         this.stopListening(Backbone.Events, 'dataMapReturned');
         if (_.size(DataMap) === 0) {
@@ -480,6 +531,7 @@
         this.stopListening(Backbone.Events, 'dataMapReturned');
         this.$('#resort-name').html(this.model.get('formatted_name') + ' Base Depth');
         this.$('#resort-data').html(this.loadingMessageHTML);
+        this.$('#state-picker').hide();
         if (_.size(DataMap) === 0) {
           this.listenTo(Backbone.Events, 'dataMapReturned', function() {
             _this.populateChartData;
@@ -552,6 +604,13 @@
 
         Resorts.bind('sync', this.render, this);
         Resorts.fetch();
+        this.stateMap = {
+          'california': 'CA',
+          'colorado': 'CO',
+          'vermont': 'VT',
+          'utah': 'UT',
+          'wyoming': 'WY'
+        };
         return $.ajax({
           url: 'api/snow-days-map',
           success: function(data) {
@@ -576,14 +635,25 @@
       };
 
       AppView.prototype.appendAllResorts = function() {
-        var sortedResortList,
+        var sortedStateList, stateNames,
           _this = this;
 
-        sortedResortList = _.sortBy(Resorts.models, function(resort) {
-          return resort.get('formatted_name');
+        sortedStateList = _.sortBy(Resorts._resortStateMap, function(v, k) {
+          return k;
         });
-        return _.each(sortedResortList, function(resort) {
-          return _this.appendResort(resort);
+        stateNames = _.keys(Resorts._resortStateMap).sort();
+        return _.each(sortedStateList, function(resorts, index) {
+          var sortedResortList, stateName;
+
+          stateName = stateNames[index];
+          _this.$('#resort-list').append('<div class="resort-list-state-header">' + stateName + '</div>');
+          $('#state-picker').append('<button data-state="' + stateName + '" class="btn btn-primary active">' + _this.stateMap[stateName] + '</button>');
+          sortedResortList = _.sortBy(resorts, function(v, k) {
+            return k;
+          });
+          return _.each(sortedResortList, function(resort) {
+            return _this.appendResort(resort);
+          });
         });
       };
 
