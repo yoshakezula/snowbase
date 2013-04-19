@@ -30,7 +30,7 @@ var require = {
     modernizr: {
       exports: 'Modernizr'
     },
-    app: ['backbone', 'rickshaw', 'bootstrap', 'modernizr']
+    app: ['backbone', 'rickshaw', 'modernizr']
   },
 
   preserveLicenseComments: false,

@@ -62,13 +62,6 @@ $ ->
       'click' : 'clickHandler'
 
     clickHandler: () ->
-      # if !SnowDays._resortMap[@model.get 'name'] && @fetchQueue.indexOf(@model.id) == -1 #only fetch if we didn't already try to
-      #   @fetchQueue.push @model.id
-      #   SnowDays.fetch data: resort_id: @model.id
-      #   @listenTo SnowDays, 'sync', (collection, response) =>
-      #     if @fetchQueue.indexOf(response[0].resort_id) > -1
-      #       @fetchQueue.pop(@fetchQueue.indexOf(response[0].resort_id))
-
       $('.resort-list-item-selected').removeClass 'resort-list-item-selected'
       @$el.addClass 'resort-list-item-selected'
       Backbone.Events.trigger 'resortClicked', @model
@@ -108,13 +101,8 @@ $ ->
       @buildColorArrays()
 
     filterStates: (e) ->
+      $(e.target).toggleClass 'active'
       @selectedStates = _.map @$('#state-picker button.active'), (button) -> button.getAttribute('data-state')
-      clickedState = e.target.getAttribute('data-state')
-      if @selectedStates.indexOf(clickedState) > -1
-        #we're deselecting a state
-        @selectedStates.splice(@selectedStates.indexOf(clickedState), 1)
-      else
-        @selectedStates.push clickedState
 
       @populateChartData()
       @renderChart()

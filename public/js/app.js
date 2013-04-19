@@ -182,17 +182,10 @@
       };
 
       ResortDataPane.prototype.filterStates = function(e) {
-        var clickedState;
-
+        $(e.target).toggleClass('active');
         this.selectedStates = _.map(this.$('#state-picker button.active'), function(button) {
           return button.getAttribute('data-state');
         });
-        clickedState = e.target.getAttribute('data-state');
-        if (this.selectedStates.indexOf(clickedState) > -1) {
-          this.selectedStates.splice(this.selectedStates.indexOf(clickedState), 1);
-        } else {
-          this.selectedStates.push(clickedState);
-        }
         this.populateChartData();
         return this.renderChart();
       };
