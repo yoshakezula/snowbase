@@ -883,6 +883,8 @@ body{background-image:url("../img/wall4.png");-webkit-user-select:none;-moz-user
 #resort-list-header{font-size:12px;color:#aaa;border-bottom:1px solid #ccc}
 #resort-list-search-box{background-color:transparent;border-top:none;border-left:none;border-right:none;border-bottom:1px dotted #aaa;width:90%;padding-left:20px;}
 #resort-list-search-box margin-,#resort-list-search-box:focus{outline:none;background-color:rgba(0,0,0,0.4);-webkit-transition:background-color .5s;-moz-transition:background-color .5s;-o-transition:background-color .5s;-ms-transition:background-color .5s;transition:background-color .5s;color:#fff}
+#contact-link{position:absolute;top:10px;text-decoration:none;color:#5f7938 !important;}
+#contact-link:visited{color:#5f7938 !important}
 .resort-list-state-header{margin-top:10px;color:#aaa;font-size:12px;margin-bottom:-5px}
 #state-picker{margin-top:15px}
 #resort-data{position:relative;}

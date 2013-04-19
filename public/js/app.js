@@ -509,7 +509,7 @@
         $('.resort-list-item-selected').removeClass('resort-list-item-selected');
         $('#compare-resorts-link').addClass('resort-list-item-selected');
         this.$('#resort-data').html(this.loadingMessageHTML);
-        this.$('#resort-name').html('Comparative Base Depth');
+        this.$('#resort-name').html('Average Base Depth (2007-2013)');
         this.$('#state-picker').show();
         this.model = void 0;
         this.stopListening(Backbone.Events, 'dataMapReturned');

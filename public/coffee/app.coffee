@@ -376,7 +376,7 @@ $ ->
       $('.resort-list-item-selected').removeClass 'resort-list-item-selected'
       $('#compare-resorts-link').addClass 'resort-list-item-selected'
       @$('#resort-data').html @loadingMessageHTML
-      @$('#resort-name').html 'Comparative Base Depth'
+      @$('#resort-name').html 'Average Base Depth (2007-2013)'
       @$('#state-picker').show()
       @model = undefined
       @stopListening Backbone.Events, 'dataMapReturned'
