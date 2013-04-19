@@ -39,12 +39,16 @@ $ ->
   
   class ResortView extends Backbone.View
     className: 'resort-list-item'
+    initialize: ()->
+      @fetchQueue = []
     events:
       'click' : 'clickHandler'
 
     clickHandler: () ->
-      if !SnowDays._resortMap[@model.get 'name']
+      if !SnowDays._resortMap[@model.get 'name'] && @fetchQueue.indexOf(@model.id) == -1 #only fetch if we didn't already try to
+        @fetchQueue.push @model.id
         SnowDays.fetch data: resort_id: @model.id
+        
       $('.resort-list-item-selected').removeClass 'resort-list-item-selected'
       @$el.addClass 'resort-list-item-selected'
       Backbone.Events.trigger 'resortClicked', @model
@@ -271,9 +275,6 @@ $ ->
       @individualResortMode = @model != undefined
 
       seriesNames = if @individualResortMode then (_.keys SnowDays._resortMap[@model.get('name')]).sort().reverse() else _.keys SnowDays._resortMap
-      colorMap = {}
-      _.each seriesNames, (seriesName) =>
-        colorMap[seriesName] = if seriesName == 'Average' then 'transparent' else @getColor()
 
       @firstSeasonName = _.first(_.without(seriesNames, 'Average'))
 
@@ -313,12 +314,14 @@ $ ->
         @chartData.push 
           name: seriesNameToShow
           data: seriesData
-          color: colorMap[seriesName]
+          color: '#fff'
           stroke: if seriesName == 'Average' then 'rgba(255,255,255,0.9)' else 'rgba(0,0,0,0.2)'
 
       #Sort the series first by average, then most recent season, then by average base
       @chartData = _.sortBy @chartData, (series) => 
         if series.name == 'Average' then 0 else if @individualResortMode && series.name == @firstSeasonName then 1 else @averageBaseMap[series.name]
+      _.each @chartData, (series) =>
+        series.color = if series.name == 'Average' then 'transparent' else @getColor()
       @chartData = @chartData.reverse()
 
 
@@ -352,7 +355,7 @@ $ ->
 
       #Make sure the chart data is ready
       if !SnowDays._resortMap[@model.get 'name']
-        @listenTo SnowDays, 'sync', () => 
+        @listenTo SnowDays, 'sync', () =>
           @populateChartData()
           @renderChart()
         return

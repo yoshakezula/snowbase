@@ -103,12 +103,17 @@
 
       ResortView.prototype.className = 'resort-list-item';
 
+      ResortView.prototype.initialize = function() {
+        return this.fetchQueue = [];
+      };
+
       ResortView.prototype.events = {
         'click': 'clickHandler'
       };
 
       ResortView.prototype.clickHandler = function() {
-        if (!SnowDays._resortMap[this.model.get('name')]) {
+        if (!SnowDays._resortMap[this.model.get('name')] && this.fetchQueue.indexOf(this.model.id) === -1) {
+          this.fetchQueue.push(this.model.id);
           SnowDays.fetch({
             data: {
               resort_id: this.model.id
@@ -355,7 +360,7 @@
       };
 
       ResortDataPane.prototype.populateChartData = function() {
-        var colorMap, dataSet, seriesNames,
+        var dataSet, seriesNames,
           _this = this;
 
         this.paletteStep = -1;
@@ -364,10 +369,6 @@
         this.averageBaseMap = {};
         this.individualResortMode = this.model !== void 0;
         seriesNames = this.individualResortMode ? (_.keys(SnowDays._resortMap[this.model.get('name')])).sort().reverse() : _.keys(SnowDays._resortMap);
-        colorMap = {};
-        _.each(seriesNames, function(seriesName) {
-          return colorMap[seriesName] = seriesName === 'Average' ? 'transparent' : _this.getColor();
-        });
         this.firstSeasonName = _.first(_.without(seriesNames, 'Average'));
         dataSet = this.individualResortMode ? SnowDays._resortMap[this.model.get('name')] : SnowDays._resortMap;
         _.each(dataSet, function(snowDays, seriesName) {
@@ -400,7 +401,7 @@
           return _this.chartData.push({
             name: seriesNameToShow,
             data: seriesData,
-            color: colorMap[seriesName],
+            color: '#fff',
             stroke: seriesName === 'Average' ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.2)'
           });
         });
@@ -412,6 +413,9 @@
           } else {
             return _this.averageBaseMap[series.name];
           }
+        });
+        _.each(this.chartData, function(series) {
+          return series.color = series.name === 'Average' ? 'transparent' : _this.getColor();
         });
         return this.chartData = this.chartData.reverse();
       };
