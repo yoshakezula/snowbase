@@ -3,7 +3,7 @@
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   $(function() {
-    var AppView, Resort, ResortCollection, ResortDataPane, ResortSearchBox, ResortView, Resorts, SnowDay, SnowDayCollection, SnowDays, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7;
+    var AppView, DataMap, Resort, ResortCollection, ResortDataPane, ResortSearchBox, ResortView, Resorts, SnowDay, SnowDayCollection, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7;
 
     Resort = (function(_super) {
       __extends(Resort, _super);
@@ -41,12 +41,21 @@
 
       SnowDayCollection.prototype.model = SnowDay;
 
-      SnowDayCollection.prototype.url = 'api/snow-days';
+      SnowDayCollection.prototype.url = 'api/snow-days-map';
 
       SnowDayCollection.prototype.initialize = function() {
+        var _this = this;
+
         this._resortMap = {};
-        this.on('add', this._addModelToMaps);
-        return this.on('sync', this._addAllModelsToMaps);
+        this.on('sync', this._addAllModelsToMaps);
+        return $.ajax({
+          url: 'api/snow-days-map',
+          success: function(data) {
+            _this.dataMap = data;
+            return console.log(data);
+          },
+          dataType: 'json'
+        });
       };
 
       SnowDayCollection.prototype._addModelToMaps = function(model) {
@@ -65,12 +74,7 @@
       };
 
       SnowDayCollection.prototype._addAllModelsToMaps = function() {
-        var _this = this;
-
-        this._resortMap = {};
-        return _.each(this.models, function(model) {
-          return _this._addModelToMaps(model);
-        });
+        return console.log(this.models);
       };
 
       return SnowDayCollection;
@@ -88,11 +92,24 @@
 
       ResortCollection.prototype.url = '/api/resorts';
 
+      ResortCollection.prototype.initialize = function() {
+        this.on('sync', this.populateResortMaps);
+        return this._resortNameMap = {};
+      };
+
+      ResortCollection.prototype.populateResortMaps = function() {
+        var _this = this;
+
+        return _.each(this.models, function(model) {
+          return _this._resortNameMap[model.get('formatted_name')] = model;
+        });
+      };
+
       return ResortCollection;
 
     })(Backbone.Collection);
-    SnowDays = new SnowDayCollection();
     Resorts = new ResortCollection();
+    DataMap = {};
     ResortView = (function(_super) {
       __extends(ResortView, _super);
 
@@ -112,21 +129,6 @@
       };
 
       ResortView.prototype.clickHandler = function() {
-        var _this = this;
-
-        if (!SnowDays._resortMap[this.model.get('name')] && this.fetchQueue.indexOf(this.model.id) === -1) {
-          this.fetchQueue.push(this.model.id);
-          SnowDays.fetch({
-            data: {
-              resort_id: this.model.id
-            }
-          });
-          this.listenTo(SnowDays, 'sync', function(collection, response) {
-            if (_this.fetchQueue.indexOf(response[0].resort_id) > -1) {
-              return _this.fetchQueue.pop(_this.fetchQueue.indexOf(response[0].resort_id));
-            }
-          });
-        }
         $('.resort-list-item-selected').removeClass('resort-list-item-selected');
         this.$el.addClass('resort-list-item-selected');
         return Backbone.Events.trigger('resortClicked', this.model);
@@ -154,11 +156,33 @@
         this.chartData = [];
         this.listenTo(Backbone.Events, 'resortClicked', this.resortClickedHandler);
         this.listenTo(Backbone.Events, 'compareResortsClicked', this.compareResorts);
+        if (_.size(DataMap) > 0) {
+          this.populateDataMap;
+        } else {
+          this.listenTo(Backbone.Events, 'dataMapReturned', this.populateDataMap);
+        }
         this.paletteStep = -1;
+        this.dateMap = {};
         this.rgba = $('html').hasClass('rgba');
         this.basePalette = ['#D92929', '#F2911B', '#016483', '#F2CB05', '#6ECAC7'];
         this.loadingMessageHTML = '<div class="slick-loading-message"><span>L</span><span>O</span><span>A</span><span>D</span><span>I</span><span>N</span><span>G</span></div>';
         return this.buildColorArrays();
+      };
+
+      ResortDataPane.prototype.populateDataMap = function() {
+        var seasonToWorkWith,
+          _this = this;
+
+        seasonToWorkWith = _.find(DataMap[Resorts.models[0].get('name')], function(seasonData, seasonName) {
+          return seasonName !== 'Average';
+        });
+        return _.each(seasonToWorkWith, function(snowDayData, seasonDay) {
+          var date, dateString;
+
+          dateString = snowDayData.d;
+          date = new Date(Math.floor(dateString / 10000), Math.floor((dateString / 100) % 100) - 1, Math.floor(dateString % 100));
+          return _this.dateMap[seasonDay] = date;
+        });
       };
 
       ResortDataPane.prototype.buildColorArrays = function() {
@@ -173,6 +197,12 @@
         });
         _.each(this.basePalette, function(color) {
           return _this.paletteHEX.push(_this.shadeColor(color, 70));
+        });
+        _.each(this.basePalette, function(color) {
+          return _this.paletteHEX.push(_this.shadeColor(color, 35));
+        });
+        _.each(this.basePalette, function(color) {
+          return _this.paletteHEX.push(_this.shadeColor(color, 60));
         });
         return this.paletteRGBA = _.map(this.paletteHEX, function(color) {
           return _this.colorToRGBA(color).rgba;
@@ -372,12 +402,11 @@
 
         this.paletteStep = -1;
         this.chartData = [];
-        this.dateMap = {};
         this.averageBaseMap = {};
         this.individualResortMode = this.model !== void 0;
-        seriesNames = this.individualResortMode ? (_.keys(SnowDays._resortMap[this.model.get('name')])).sort().reverse() : _.keys(SnowDays._resortMap);
+        seriesNames = this.individualResortMode ? (_.keys(DataMap[this.model.get('name')])).sort().reverse() : _.keys(Resorts._resortNameMap);
         this.firstSeasonName = _.first(_.without(seriesNames, 'Average'));
-        dataSet = this.individualResortMode ? SnowDays._resortMap[this.model.get('name')] : SnowDays._resortMap;
+        dataSet = this.individualResortMode ? DataMap[this.model.get('name')] : DataMap;
         _.each(dataSet, function(snowDays, seriesName) {
           var seriesData, seriesNameToShow, seriesNonZeroDays, seriesSum, subDataSet;
 
@@ -388,21 +417,19 @@
             return resort.get('name') === seriesName;
           }).get('formatted_name');
           subDataSet = _this.individualResortMode ? snowDays : snowDays['Average'];
-          _.each(subDataSet, function(snowDay) {
-            var base, seasonDay;
+          _.each(subDataSet, function(snowDayData, seasonDay) {
+            var base, dateString;
 
-            base = snowDay.get('base');
-            seasonDay = snowDay.get('season_day');
+            base = snowDayData.b;
+            dateString = _this.individualResortMode ? snowDayData.d : void 0;
             seriesData.push({
-              x: seasonDay,
+              x: parseInt(seasonDay),
               y: base
             });
             if (base > 0 && seasonDay > 30 && seasonDay < 150) {
               seriesSum += base;
-              seriesNonZeroDays += 1;
+              return seriesNonZeroDays += 1;
             }
-            seriesSum += snowDay.get('base');
-            return _this.dateMap[seasonDay] = snowDay.get('date');
           });
           _this.averageBaseMap[seriesNameToShow] = parseInt(seriesSum / seriesNonZeroDays);
           return _this.chartData.push({
@@ -435,14 +462,13 @@
         this.$('#resort-data').html(this.loadingMessageHTML);
         this.$('#resort-name').html('Comparative Base Depth');
         this.model = void 0;
-        if (_.size(SnowDays._resortMap) === 0) {
-          this.listenTo(SnowDays, 'sync', function() {
-            _this.populateChartData();
-            return _this.renderChart();
+        this.stopListening(Backbone.Events, 'dataMapReturned');
+        if (_.size(DataMap) === 0) {
+          this.listenTo(Backbone.Events, 'dataMapReturned', function() {
+            _this.populateChartData;
+            return _this.renderChart;
           });
-          return;
         }
-        this.stopListening(SnowDays, 'sync');
         this.populateChartData();
         return this.renderChart();
       };
@@ -451,15 +477,14 @@
         var _this = this;
 
         this.model = model;
-        this.stopListening(SnowDays, 'sync');
+        this.stopListening(Backbone.Events, 'dataMapReturned');
         this.$('#resort-name').html(this.model.get('formatted_name') + ' Base Depth');
         this.$('#resort-data').html(this.loadingMessageHTML);
-        if (!SnowDays._resortMap[this.model.get('name')]) {
-          this.listenTo(SnowDays, 'sync', function() {
-            _this.populateChartData();
-            return _this.renderChart();
+        if (_.size(DataMap) === 0) {
+          this.listenTo(Backbone.Events, 'dataMapReturned', function() {
+            _this.populateChartData;
+            return _this.renderChart;
           });
-          return;
         }
         this.populateChartData();
         return this.renderChart();
@@ -523,11 +548,18 @@
       };
 
       AppView.prototype.initialize = function() {
+        var _this = this;
+
         Resorts.bind('sync', this.render, this);
         Resorts.fetch();
-        return setTimeout((function() {
-          return SnowDays.fetch();
-        }), 3000);
+        return $.ajax({
+          url: 'api/snow-days-map',
+          success: function(data) {
+            DataMap = data;
+            return Backbone.Events.trigger('dataMapReturned');
+          },
+          dataType: 'json'
+        });
       };
 
       AppView.prototype.compareResortsClickHandler = function() {

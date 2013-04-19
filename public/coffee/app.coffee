@@ -8,11 +8,16 @@ $ ->
 
   class SnowDayCollection extends Backbone.Collection
     model: SnowDay
-    url: 'api/snow-days'
+    url: 'api/snow-days-map'
     initialize: () ->
       @_resortMap = {}
-      @on 'add', @_addModelToMaps
       @on 'sync', @_addAllModelsToMaps
+      $.ajax
+        url: 'api/snow-days-map'
+        success: (data) => 
+          @dataMap = data
+          console.log data
+        dataType: 'json'
 
     _addModelToMaps: (model) ->
       resortName = model.get 'resort_name'
@@ -26,16 +31,25 @@ $ ->
       @_resortMap[resortName][season][model.get('date_string') || model.get('season_day')] = model
 
     _addAllModelsToMaps: () ->
-      @_resortMap = {}
-      _.each @models, (model) =>
-        @_addModelToMaps model
+      console.log @models
+      # @_resortMap = {}
+      # _.each @models, (model) =>
+      #   @_addModelToMaps model
 
   class ResortCollection extends Backbone.Collection
     model: Resort
     url: '/api/resorts'
+    initialize: ->
+      @on 'sync', @populateResortMaps
+      @_resortNameMap = {}
 
-  SnowDays = new SnowDayCollection()  
+    populateResortMaps: () ->
+      _.each @models, (model) =>
+        @_resortNameMap[model.get 'formatted_name'] = model
+
+  # SnowDays = new SnowDayCollection()  
   Resorts = new ResortCollection()
+  DataMap = {}
   
   class ResortView extends Backbone.View
     className: 'resort-list-item'
@@ -45,12 +59,12 @@ $ ->
       'click' : 'clickHandler'
 
     clickHandler: () ->
-      if !SnowDays._resortMap[@model.get 'name'] && @fetchQueue.indexOf(@model.id) == -1 #only fetch if we didn't already try to
-        @fetchQueue.push @model.id
-        SnowDays.fetch data: resort_id: @model.id
-        @listenTo SnowDays, 'sync', (collection, response) =>
-          if @fetchQueue.indexOf(response[0].resort_id) > -1
-            @fetchQueue.pop(@fetchQueue.indexOf(response[0].resort_id))
+      # if !SnowDays._resortMap[@model.get 'name'] && @fetchQueue.indexOf(@model.id) == -1 #only fetch if we didn't already try to
+      #   @fetchQueue.push @model.id
+      #   SnowDays.fetch data: resort_id: @model.id
+      #   @listenTo SnowDays, 'sync', (collection, response) =>
+      #     if @fetchQueue.indexOf(response[0].resort_id) > -1
+      #       @fetchQueue.pop(@fetchQueue.indexOf(response[0].resort_id))
 
       $('.resort-list-item-selected').removeClass 'resort-list-item-selected'
       @$el.addClass 'resort-list-item-selected'
@@ -66,7 +80,12 @@ $ ->
       @chartData = []
       @listenTo Backbone.Events, 'resortClicked', @resortClickedHandler
       @listenTo Backbone.Events, 'compareResortsClicked', @compareResorts
+      if _.size(DataMap) > 0
+        @populateDataMap
+      else
+        @listenTo Backbone.Events, 'dataMapReturned', @populateDataMap
       @paletteStep = -1
+      @dateMap = {}
       @rgba = $('html').hasClass 'rgba'
       @basePalette = [
         '#D92929'
@@ -82,6 +101,13 @@ $ ->
       ]
       @loadingMessageHTML = '<div class="slick-loading-message"><span>L</span><span>O</span><span>A</span><span>D</span><span>I</span><span>N</span><span>G</span></div>'
       @buildColorArrays()
+    populateDataMap: () ->
+      #Push to the date map, so we can match up the "season day" with a date
+      seasonToWorkWith = _.find DataMap[Resorts.models[0].get('name')], (seasonData, seasonName) -> seasonName != 'Average'
+      _.each seasonToWorkWith, (snowDayData, seasonDay) =>
+        dateString = snowDayData.d
+        date = new Date(Math.floor(dateString / 10000), Math.floor((dateString / 100) % 100) - 1, Math.floor(dateString % 100))
+        @dateMap[seasonDay] = date
 
     buildColorArrays: () ->
       @paletteHEX = []
@@ -91,6 +117,10 @@ $ ->
         @paletteHEX.push @shadeColor(color, 45)
       _.each @basePalette, (color) =>
         @paletteHEX.push @shadeColor(color, 70)
+      _.each @basePalette, (color) =>
+        @paletteHEX.push @shadeColor(color, 35)
+      _.each @basePalette, (color) =>
+        @paletteHEX.push @shadeColor(color, 60)
       # @paletteHEX = [
       #   '#39cc67' #aqua
       #   '#70A5FF'
@@ -273,15 +303,14 @@ $ ->
     populateChartData: () ->
       @paletteStep = -1
       @chartData = []
-      @dateMap = {}
       @averageBaseMap = {}
       @individualResortMode = @model != undefined
 
-      seriesNames = if @individualResortMode then (_.keys SnowDays._resortMap[@model.get('name')]).sort().reverse() else _.keys SnowDays._resortMap
+      seriesNames = if @individualResortMode then (_.keys DataMap[@model.get('name')]).sort().reverse() else _.keys Resorts._resortNameMap
 
       @firstSeasonName = _.first(_.without(seriesNames, 'Average'))
 
-      dataSet = if @individualResortMode then SnowDays._resortMap[@model.get('name')] else SnowDays._resortMap
+      dataSet = if @individualResortMode then DataMap[@model.get('name')] else DataMap
 
       _.each dataSet, (snowDays, seriesName) =>
 
@@ -292,23 +321,20 @@ $ ->
 
         subDataSet = if @individualResortMode then snowDays else snowDays['Average']
 
-        _.each subDataSet, (snowDay) =>
-          base = snowDay.get 'base'
-          seasonDay = snowDay.get 'season_day'
+        _.each subDataSet, (snowDayData, seasonDay) =>
+          base = snowDayData.b
+          dateString = if @individualResortMode then snowDayData.d else 
 
           #push to seriesData, which we'll use for the chart data
           seriesData.push
-            x: seasonDay
+            x: parseInt(seasonDay)
             y: base
           
           #calculate total sum so we can get an average
           if base > 0 && seasonDay > 30 && seasonDay < 150 #cut out first and last month in case some resorts don't have as complete data
             seriesSum += base
             seriesNonZeroDays += 1
-          seriesSum += snowDay.get 'base'
-
-          #Push to the date map, so we can match up the "season day" with a date
-          @dateMap[seasonDay] = snowDay.get('date')
+          # seriesSum += snowDay.get 'base' DOn't know why this is here
 
         #set average base for each season in the averageBaseMap
         @averageBaseMap[seriesNameToShow] = parseInt(seriesSum / seriesNonZeroDays)
@@ -334,14 +360,20 @@ $ ->
       @$('#resort-data').html @loadingMessageHTML
       @$('#resort-name').html 'Comparative Base Depth'
       @model = undefined
+      @stopListening Backbone.Events, 'dataMapReturned'
+
+      if _.size(DataMap) == 0
+        @listenTo Backbone.Events, 'dataMapReturned', () =>
+          @populateChartData
+          @renderChart
 
       #Make sure the chart data is ready
-      if _.size(SnowDays._resortMap) == 0
-        @listenTo SnowDays, 'sync', () => 
-          @populateChartData()
-          @renderChart()
-        return
-      @stopListening SnowDays, 'sync'
+      # if _.size(SnowDays._resortMap) == 0
+      #   @listenTo SnowDays, 'sync', () => 
+      #     @populateChartData()
+      #     @renderChart()
+      #   return
+      # @stopListening SnowDays, 'sync'
 
       @populateChartData()
       @renderChart()
@@ -349,7 +381,8 @@ $ ->
     resortClickedHandler: (model) ->
       #store the model
       @model = model
-      @stopListening SnowDays, 'sync'
+      # @stopListening SnowDays, 'sync'
+      @stopListening Backbone.Events, 'dataMapReturned'
 
       #set the name of the clicked resort
       @$('#resort-name').html @model.get('formatted_name') + ' Base Depth'
@@ -357,11 +390,15 @@ $ ->
       @$('#resort-data').html @loadingMessageHTML
 
       #Make sure the chart data is ready
-      if !SnowDays._resortMap[@model.get 'name']
-        @listenTo SnowDays, 'sync', () =>
-          @populateChartData()
-          @renderChart()
-        return
+      # if !SnowDays._resortMap[@model.get 'name']
+      #   @listenTo SnowDays, 'sync', () =>
+      #     @populateChartData()
+      #     @renderChart()
+      #   return
+      if _.size(DataMap) == 0
+        @listenTo Backbone.Events, 'dataMapReturned', () =>
+          @populateChartData
+          @renderChart
 
       @populateChartData()
       @renderChart()
@@ -393,8 +430,15 @@ $ ->
     initialize: () ->
       Resorts.bind 'sync', @render, this
       Resorts.fetch()
+      #Get snowday map
+      $.ajax
+        url: 'api/snow-days-map'
+        success: (data) => 
+          DataMap = data
+          Backbone.Events.trigger 'dataMapReturned'
+        dataType: 'json'
       #Delay fetching all snowdays
-      setTimeout (() -> SnowDays.fetch()), 3000
+      # setTimeout (() -> SnowDays.fetch()), 3000
     
     compareResortsClickHandler: () ->
       Backbone.Events.trigger 'compareResortsClicked'
