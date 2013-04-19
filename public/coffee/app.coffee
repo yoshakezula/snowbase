@@ -81,12 +81,6 @@ $ ->
       @selectedStates = _.map @$('#state-picker button.active'), (button) -> button.getAttribute('data-state')
       @listenTo Backbone.Events, 'resortClicked', @resortClickedHandler
       @listenTo Backbone.Events, 'compareResortsClicked', @compareResorts
-      
-      #Wait to populate data map if data not ready
-      if _.size(DataMap) > 0
-        @populateDateMap
-      else
-        @listenTo Backbone.Events, 'dataMapReturned', @populateDateMap
       @paletteStep = -1
       @dateMap = {}
       @rgba = $('html').hasClass 'rgba'
@@ -99,6 +93,14 @@ $ ->
       ]
       @loadingMessageHTML = '<div class="slick-loading-message"><span>L</span><span>O</span><span>A</span><span>D</span><span>I</span><span>N</span><span>G</span></div>'
       @buildColorArrays()
+      #Wait to populate data map if data not ready
+      if _.size(DataMap) > 0
+        @populateDateMap()
+        @compareResorts()
+      else
+        @listenTo Backbone.Events, 'dataMapReturned', () =>
+          @populateDateMap()
+          @compareResorts()
 
     filterStates: (e) ->
       $(e.target).toggleClass 'active'

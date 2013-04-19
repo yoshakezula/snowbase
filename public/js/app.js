@@ -162,23 +162,29 @@
       };
 
       ResortDataPane.prototype.initialize = function() {
+        var _this = this;
+
         this.chartData = [];
         this.selectedStates = _.map(this.$('#state-picker button.active'), function(button) {
           return button.getAttribute('data-state');
         });
         this.listenTo(Backbone.Events, 'resortClicked', this.resortClickedHandler);
         this.listenTo(Backbone.Events, 'compareResortsClicked', this.compareResorts);
-        if (_.size(DataMap) > 0) {
-          this.populateDateMap;
-        } else {
-          this.listenTo(Backbone.Events, 'dataMapReturned', this.populateDateMap);
-        }
         this.paletteStep = -1;
         this.dateMap = {};
         this.rgba = $('html').hasClass('rgba');
         this.basePalette = ['#D92929', '#F2911B', '#016483', '#F2CB05', '#6ECAC7'];
         this.loadingMessageHTML = '<div class="slick-loading-message"><span>L</span><span>O</span><span>A</span><span>D</span><span>I</span><span>N</span><span>G</span></div>';
-        return this.buildColorArrays();
+        this.buildColorArrays();
+        if (_.size(DataMap) > 0) {
+          this.populateDateMap();
+          return this.compareResorts();
+        } else {
+          return this.listenTo(Backbone.Events, 'dataMapReturned', function() {
+            _this.populateDateMap();
+            return _this.compareResorts();
+          });
+        }
       };
 
       ResortDataPane.prototype.filterStates = function(e) {
