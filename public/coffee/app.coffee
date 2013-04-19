@@ -48,7 +48,10 @@ $ ->
       if !SnowDays._resortMap[@model.get 'name'] && @fetchQueue.indexOf(@model.id) == -1 #only fetch if we didn't already try to
         @fetchQueue.push @model.id
         SnowDays.fetch data: resort_id: @model.id
-        
+        @listenTo SnowDays, 'sync', (collection, response) =>
+          if @fetchQueue.indexOf(response[0].resort_id) > -1
+            @fetchQueue.pop(@fetchQueue.indexOf(response[0].resort_id))
+
       $('.resort-list-item-selected').removeClass 'resort-list-item-selected'
       @$el.addClass 'resort-list-item-selected'
       Backbone.Events.trigger 'resortClicked', @model

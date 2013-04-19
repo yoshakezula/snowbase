@@ -112,11 +112,18 @@
       };
 
       ResortView.prototype.clickHandler = function() {
+        var _this = this;
+
         if (!SnowDays._resortMap[this.model.get('name')] && this.fetchQueue.indexOf(this.model.id) === -1) {
           this.fetchQueue.push(this.model.id);
           SnowDays.fetch({
             data: {
               resort_id: this.model.id
+            }
+          });
+          this.listenTo(SnowDays, 'sync', function(collection, response) {
+            if (_this.fetchQueue.indexOf(response[0].resort_id) > -1) {
+              return _this.fetchQueue.pop(_this.fetchQueue.indexOf(response[0].resort_id));
             }
           });
         }
