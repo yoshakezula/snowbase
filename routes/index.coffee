@@ -6,7 +6,7 @@ exports.init = (app) ->
     res.render 'index', title: "Compare This Year's Snow Base Depth to the Past"
 
   app.get '/api/resorts', (req, res) ->
-    request {url: 'http://snowbase-api.kennychan.co/api/resorts', json: true}, (error, response, body) ->
+    request {url: 'https://snowbase-api.s3.amazonaws.com/resort_map.json', json: true}, (error, response, body) ->
         if !error && response.statusCode == 200
           res.send body
         else
@@ -21,7 +21,7 @@ exports.init = (app) ->
           res.send 'error'
 
   app.get '/api/snow-days-map', (req, res) ->
-    request {url: 'http://snowbase-api.kennychan.co/api/snow-days-map', json: true}, (error, response, body) ->
+    request {url: 'https://snowbase-api.s3.amazonaws.com/snow_day_map.json', json: true}, (error, response, body) ->
         if !error && response.statusCode == 200
           res.send body
         else
