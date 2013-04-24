@@ -3,7 +3,7 @@ url = require 'url'
 
 exports.init = (app) ->
   app.get '/', (req, res) ->
-    res.render 'index', title: "Compare This Year's Snow Base Depth to the Past"
+    res.render 'index', title: "Snowbase - Compare Base Depth Across Resorts"
 
   app.get '/api/resorts', (req, res) ->
     request {url: 'https://snowbase-api.s3.amazonaws.com/resort_map.json', json: true}, (error, response, body) ->
