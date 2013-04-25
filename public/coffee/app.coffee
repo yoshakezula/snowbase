@@ -32,9 +32,6 @@ $ ->
 
     _addAllModelsToMaps: () ->
       console.log @models
-      # @_resortMap = {}
-      # _.each @models, (model) =>
-      #   @_addModelToMaps model
 
   class ResortCollection extends Backbone.Collection
     model: Resort
@@ -43,12 +40,15 @@ $ ->
       @on 'sync', @populateResortMaps
       @_resortNameMap = {}
       @_resortStateMap = {}
+      @_stateInfoMap = {}
 
     populateResortMaps: () ->
       _.each @models, (model) =>
+        state_formatted = model.get 'state_formatted'
         @_resortNameMap[model.get 'formatted_name'] = model
-        @_resortStateMap[model.get 'state'] = {} if !@_resortStateMap[model.get 'state']
-        @_resortStateMap[model.get 'state'][model.get 'name'] = model
+        @_resortStateMap[state_formatted] = {} if !@_resortStateMap[state_formatted]
+        @_resortStateMap[state_formatted][model.get 'name'] = model
+        @_stateInfoMap[state_formatted] = state_formatted: model.get('state_formatted'), state_short: model.get('state_short')
 
   # SnowDays = new SnowDayCollection()  
   Resorts = new ResortCollection()
@@ -434,13 +434,6 @@ $ ->
     initialize: () ->
       Resorts.bind 'sync', @render, this
       Resorts.fetch()
-      @stateMap = 
-        'california' : 'CA'
-        'colorado' : 'CO'
-        'vermont' : 'VT'
-        'utah' : 'UT'
-        'wyoming' : 'WY'
-        'northeast' : 'VT'
       #Get snowday map
       $.ajax
         url: 'api/snow-days-map'
@@ -462,15 +455,17 @@ $ ->
     appendAllResorts: () ->
       sortedStateList = _.sortBy Resorts._resortStateMap, (v, k) -> k
       stateNames = _.keys(Resorts._resortStateMap).sort()
+
       _.each sortedStateList, (resorts, index) =>
 
         stateName = stateNames[index]
+        stateAbbrev = Resorts._stateInfoMap[stateName]['state_short']
 
         #append state header to resort list
         @$('#resort-list').append '<div class="resort-list-state-header">' + stateName + '</div>'
 
         #append button to state picker
-        $('#state-picker').append '<button data-state="' + stateName + '" class="btn btn-primary active">' + @stateMap[stateName] + '</button>'
+        $('#state-picker').append '<button data-state="' + stateName + '" class="btn btn-primary active">' + stateAbbrev + '</button>'
 
         sortedResortList = _.sortBy resorts, (v, k) -> k
         _.each sortedResortList, (resort) =>

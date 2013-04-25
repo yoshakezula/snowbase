@@ -95,18 +95,26 @@
       ResortCollection.prototype.initialize = function() {
         this.on('sync', this.populateResortMaps);
         this._resortNameMap = {};
-        return this._resortStateMap = {};
+        this._resortStateMap = {};
+        return this._stateInfoMap = {};
       };
 
       ResortCollection.prototype.populateResortMaps = function() {
         var _this = this;
 
         return _.each(this.models, function(model) {
+          var state_formatted;
+
+          state_formatted = model.get('state_formatted');
           _this._resortNameMap[model.get('formatted_name')] = model;
-          if (!_this._resortStateMap[model.get('state')]) {
-            _this._resortStateMap[model.get('state')] = {};
+          if (!_this._resortStateMap[state_formatted]) {
+            _this._resortStateMap[state_formatted] = {};
           }
-          return _this._resortStateMap[model.get('state')][model.get('name')] = model;
+          _this._resortStateMap[state_formatted][model.get('name')] = model;
+          return _this._stateInfoMap[state_formatted] = {
+            state_formatted: model.get('state_formatted'),
+            state_short: model.get('state_short')
+          };
         });
       };
 
@@ -603,14 +611,6 @@
 
         Resorts.bind('sync', this.render, this);
         Resorts.fetch();
-        this.stateMap = {
-          'california': 'CA',
-          'colorado': 'CO',
-          'vermont': 'VT',
-          'utah': 'UT',
-          'wyoming': 'WY',
-          'northeast': 'VT'
-        };
         return $.ajax({
           url: 'api/snow-days-map',
           success: function(data) {
@@ -643,11 +643,12 @@
         });
         stateNames = _.keys(Resorts._resortStateMap).sort();
         return _.each(sortedStateList, function(resorts, index) {
-          var sortedResortList, stateName;
+          var sortedResortList, stateAbbrev, stateName;
 
           stateName = stateNames[index];
+          stateAbbrev = Resorts._stateInfoMap[stateName]['state_short'];
           _this.$('#resort-list').append('<div class="resort-list-state-header">' + stateName + '</div>');
-          $('#state-picker').append('<button data-state="' + stateName + '" class="btn btn-primary active">' + _this.stateMap[stateName] + '</button>');
+          $('#state-picker').append('<button data-state="' + stateName + '" class="btn btn-primary active">' + stateAbbrev + '</button>');
           sortedResortList = _.sortBy(resorts, function(v, k) {
             return k;
           });
