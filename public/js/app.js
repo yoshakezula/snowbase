@@ -608,7 +608,8 @@
           'colorado': 'CO',
           'vermont': 'VT',
           'utah': 'UT',
-          'wyoming': 'WY'
+          'wyoming': 'WY',
+          'northeast': 'VT'
         };
         return $.ajax({
           url: 'api/snow-days-map',
