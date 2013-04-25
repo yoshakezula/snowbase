@@ -440,6 +440,7 @@ $ ->
         'vermont' : 'VT'
         'utah' : 'UT'
         'wyoming' : 'WY'
+        'northeast' : 'VT'
       #Get snowday map
       $.ajax
         url: 'api/snow-days-map'
